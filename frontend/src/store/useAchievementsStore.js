@@ -11,7 +11,8 @@ export const useAchievementsStore = create((set) => ({
     set({ loading: true, error: null });
     try {
       const response = await achievementsApi.getAchievements(studentId);
-      set({ achievements: response.data || [], loading: false });
+      const data = response.data?.data ?? response.data ?? [];
+      set({ achievements: Array.isArray(data) ? data : [], loading: false });
     } catch (error) {
       set({ achievements: [], error: error.message, loading: false });
     }

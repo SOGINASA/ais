@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useStudentGrades } from '../hooks/useStudentGrades';
 import { useAuth } from '../hooks/useAuth';
 import { useClassSchedule } from '../hooks/useClassSchedule';
@@ -21,9 +21,16 @@ export const StudentDashboard = () => {
       fetchAchievements(user.id);
       fetchAttendance(user.id);
     }
-  }, [user?.id]);
+  }, [user?.id, fetchAchievements, fetchAttendance]);
 
-  const attendanceStats = useAttendanceStore((state) => state.getAttendanceStats());
+  const attendanceStats = useMemo(() => {
+    const safe = Array.isArray(attendance) ? attendance : [];
+    const present = safe.filter((a) => a.status === 'present').length;
+    const absent = safe.filter((a) => a.status === 'absent').length;
+    const total = safe.length;
+    const percentage = total > 0 ? ((present / total) * 100).toFixed(2) : 0;
+    return { present, absent, total, percentage };
+  }, [attendance]);
 
   const groupedGrades = grades.reduce((acc, grade) => {
     const subject = grade.subject;

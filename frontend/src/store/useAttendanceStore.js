@@ -11,7 +11,8 @@ export const useAttendanceStore = create((set, get) => ({
     set({ loading: true, error: null });
     try {
       const response = await attendanceApi.getAttendance(studentId);
-      set({ attendance: response.data || [], loading: false });
+      const data = response.data?.data ?? response.data ?? [];
+      set({ attendance: Array.isArray(data) ? data : [], loading: false });
     } catch (error) {
       set({ attendance: [], error: error.message, loading: false });
     }

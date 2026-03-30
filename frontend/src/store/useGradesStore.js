@@ -12,9 +12,10 @@ export const useGradesStore = create((set, get) => ({
     set({ loading: true, error: null });
     try {
       const response = await gradesApi.getGrades(studentId);
-      set({ grades: response.data, loading: false });
+      const data = response.data?.data ?? response.data ?? [];
+      set({ grades: Array.isArray(data) ? data : [], loading: false });
     } catch (error) {
-      set({ error: error.message, loading: false });
+      set({ grades: [], error: error.message, loading: false });
     }
   },
 
@@ -23,9 +24,10 @@ export const useGradesStore = create((set, get) => ({
     set({ loading: true, error: null });
     try {
       const response = await gradesApi.getQuarterGrades(studentId);
-      set({ quarterGrades: response.data, loading: false });
+      const data = response.data?.data ?? response.data ?? [];
+      set({ quarterGrades: Array.isArray(data) ? data : [], loading: false });
     } catch (error) {
-      set({ error: error.message, loading: false });
+      set({ quarterGrades: [], error: error.message, loading: false });
     }
   },
 
@@ -34,9 +36,10 @@ export const useGradesStore = create((set, get) => ({
     set({ loading: true, error: null });
     try {
       const response = await gradesApi.getGradesBySubject(studentId, subject);
-      set({ grades: response.data, loading: false });
+      const data = response.data?.data ?? response.data ?? [];
+      set({ grades: Array.isArray(data) ? data : [], loading: false });
     } catch (error) {
-      set({ error: error.message, loading: false });
+      set({ grades: [], error: error.message, loading: false });
     }
   },
 

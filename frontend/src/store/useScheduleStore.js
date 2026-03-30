@@ -11,7 +11,8 @@ export const useScheduleStore = create((set, get) => ({
     set({ loading: true, error: null });
     try {
       const response = await scheduleApi.getSchedule(className);
-      set({ schedule: response.data || [], loading: false });
+      const data = response.data?.data ?? response.data ?? [];
+      set({ schedule: Array.isArray(data) ? data : [], loading: false });
     } catch (error) {
       set({ schedule: [], error: error.message, loading: false });
     }
