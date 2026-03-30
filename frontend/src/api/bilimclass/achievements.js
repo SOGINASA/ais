@@ -1,16 +1,13 @@
-import bilimClassClient, { mockApiRequest } from './client';
-
-const USE_MOCK = process.env.REACT_APP_USE_MOCK !== 'false';
+import bilimClassClient from './client';
 
 export const achievementsApi = {
-  getAchievements: (studentId) => {
-    if (USE_MOCK) {
-      return mockApiRequest('/achievements', { student_id: studentId });
-    }
-    return bilimClassClient.get('/achievements', {
-      params: { student_id: studentId },
-    });
-  },
+  // Портфолио/достижения текущего студента (JWT)
+  getPortfolio: () =>
+    bilimClassClient.get('/student/portfolio'),
+
+  // Рейтинг класса
+  getLeaderboard: () =>
+    bilimClassClient.get('/student/leaderboard'),
 };
 
 export default achievementsApi;

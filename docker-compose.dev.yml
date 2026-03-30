@@ -1,0 +1,60 @@
+# Development compose with hot reload for both backend and frontend
+# Usage: docker-compose -f docker-compose.dev.yml up
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: aqbobek_backend_dev
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__
+    environment:
+      - FLASK_ENV=development
+      - FLASK_APP=app.py
+      - FLASK_DEBUG=1
+      - SECRET_KEY=dev-secret-key
+      - JWT_SECRET_KEY=dev-jwt-secret-key
+      - DATABASE_URL=sqlite:////app/database/aqbobek.db
+      - CORS_ORIGINS=http://localhost:3000,http://0.0.0.0:3000
+    env_file:
+      - ./backend/.env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('localhost', 5000), timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - aqbobek_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: aqbobek_frontend_dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - /app/node_modules
+    environment:
+      - REACT_APP_API_BASE=http://backend:5000
+      - REACT_APP_USE_MOCK=false
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - aqbobek_network
+
+networks:
+  aqbobek_network:
+    driver: bridge

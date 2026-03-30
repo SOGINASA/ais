@@ -52,6 +52,10 @@ def create_app():
     from routes.notifications import notifications_bp
     from routes.feedback import feedback_bp
     from routes.admin import admin_bp
+    from routes.student import student_bp
+    from routes.teacher import teacher_bp
+    from routes.ai import ai_bp
+    from routes.schedule import schedule_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(oauth_bp, url_prefix='/api/auth/oauth')
@@ -59,6 +63,10 @@ def create_app():
     app.register_blueprint(notifications_bp, url_prefix='/api/notifications')
     app.register_blueprint(feedback_bp, url_prefix='/api/feedback')
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
+    app.register_blueprint(student_bp, url_prefix='/api/student')
+    app.register_blueprint(teacher_bp, url_prefix='/api/teacher')
+    app.register_blueprint(ai_bp, url_prefix='/api/ai')
+    app.register_blueprint(schedule_bp, url_prefix='/api/schedule')
 
     # WebSocket для real-time уведомлений
     @sock.route('/ws/notifications')

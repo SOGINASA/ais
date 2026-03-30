@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
 import { useStudentGrades } from '../hooks/useStudentGrades';
-import { useAuth } from '../hooks/useAuth';
 import { useClassSchedule } from '../hooks/useClassSchedule';
 import { useAchievementsStore } from '../store/useAchievementsStore';
 import { useAttendanceStore } from '../store/useAttendanceStore';
@@ -8,20 +7,17 @@ import { Card, Badge } from '../components/ui';
 import GradesCard from '../components/GradesCard';
 
 export const StudentDashboard = () => {
-  const { user } = useAuth();
-  const { grades } = useStudentGrades(user?.id);
-  const { weekSchedule } = useClassSchedule(user?.class);
+  const { grades } = useStudentGrades();
+  const { weekSchedule } = useClassSchedule();
   const achievements = useAchievementsStore((state) => state.achievements);
   const fetchAchievements = useAchievementsStore((state) => state.fetchAchievements);
   const attendance = useAttendanceStore((state) => state.attendance);
   const fetchAttendance = useAttendanceStore((state) => state.fetchAttendance);
 
   useEffect(() => {
-    if (user?.id) {
-      fetchAchievements(user.id);
-      fetchAttendance(user.id);
-    }
-  }, [user?.id, fetchAchievements, fetchAttendance]);
+    fetchAchievements();
+    fetchAttendance();
+  }, [fetchAchievements, fetchAttendance]);
 
   const attendanceStats = useMemo(() => {
     const safe = Array.isArray(attendance) ? attendance : [];
@@ -33,22 +29,20 @@ export const StudentDashboard = () => {
   }, [attendance]);
 
   const groupedGrades = grades.reduce((acc, grade) => {
-    const subject = grade.subject;
-    if (!acc[subject]) {
-      acc[subject] = [];
-    }
+    const subject = grade.subject?.name || grade.subject || 'Неизвестный предмет';
+    if (!acc[subject]) acc[subject] = [];
     acc[subject].push(grade);
     return acc;
   }, {});
 
   const calculateAverage = (subjectGrades) => {
     if (subjectGrades.length === 0) return 0;
-    const weighted = subjectGrades.reduce((sum, g) => sum + g.grade * g.weight, 0);
-    const totalWeight = subjectGrades.reduce((sum, g) => sum + g.weight, 0);
+    const weighted = subjectGrades.reduce((sum, g) => sum + (g.score || g.grade || 0) * (g.weight || 1), 0);
+    const totalWeight = subjectGrades.reduce((sum, g) => sum + (g.weight || 1), 0);
     return weighted / totalWeight;
   };
 
-  const todaySchedule = weekSchedule[0]?.lessons || [];
+  const todaySchedule = weekSchedule[new Date().getDay() - 1]?.lessons || [];
 
   return (
     <div className="space-y-6">
@@ -94,17 +88,21 @@ export const StudentDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <Card title="📝 Мои предметы" className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {Object.entries(groupedGrades).map(([subject, subjectGrades]) => (
-                <GradesCard
-                  key={subject}
-                  subject={subject}
-                  average={calculateAverage(subjectGrades)}
-                  count={subjectGrades.length}
-                  recentGrades={subjectGrades.slice(-5)}
-                />
-              ))}
-            </div>
+            {Object.keys(groupedGrades).length === 0 ? (
+              <p className="text-gray-500 text-sm">Нет оценок</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Object.entries(groupedGrades).map(([subject, subjectGrades]) => (
+                  <GradesCard
+                    key={subject}
+                    subject={subject}
+                    average={calculateAverage(subjectGrades)}
+                    count={subjectGrades.length}
+                    recentGrades={subjectGrades.slice(-5)}
+                  />
+                ))}
+              </div>
+            )}
           </Card>
 
           <Card title="📅 Расписание на сегодня">
@@ -116,11 +114,15 @@ export const StudentDashboard = () => {
                     className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                   >
                     <div>
-                      <p className="font-semibold text-gray-900">{lesson.subject}</p>
+                      <p className="font-semibold text-gray-900">
+                        {lesson.subject?.name || lesson.subject}
+                      </p>
                       <p className="text-sm text-gray-600">
                         Кабинет {lesson.room} • {lesson.start_time} - {lesson.end_time}
                       </p>
-                      <p className="text-xs text-gray-500 mt-1">{lesson.teacher_name}</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {lesson.teacher?.full_name || lesson.teacher_name}
+                      </p>
                     </div>
                     <Badge variant="info">{lesson.lesson_type}</Badge>
                   </div>
@@ -140,12 +142,8 @@ export const StudentDashboard = () => {
                   <div key={achievement.id} className="flex items-start gap-3">
                     <span className="text-2xl">{achievement.icon}</span>
                     <div>
-                      <p className="font-semibold text-sm text-gray-900">
-                        {achievement.title}
-                      </p>
-                      <p className="text-xs text-gray-600 mt-0.5">
-                        {achievement.description}
-                      </p>
+                      <p className="font-semibold text-sm text-gray-900">{achievement.title}</p>
+                      <p className="text-xs text-gray-600 mt-0.5">{achievement.description}</p>
                     </div>
                   </div>
                 ))}

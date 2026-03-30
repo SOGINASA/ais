@@ -1,16 +1,17 @@
-import bilimClassClient, { mockApiRequest } from './client';
-
-const USE_MOCK = process.env.REACT_APP_USE_MOCK !== 'false';
+import bilimClassClient from './client';
 
 export const scheduleApi = {
-  getSchedule: (className) => {
-    if (USE_MOCK) {
-      return mockApiRequest('/schedule', { class: className });
-    }
-    return bilimClassClient.get('/schedule', {
-      params: { class: className },
-    });
-  },
+  // Расписание текущего студента (JWT)
+  getStudentSchedule: () =>
+    bilimClassClient.get('/student/schedule'),
+
+  // Расписание класса по ID
+  getClassSchedule: (classId) =>
+    bilimClassClient.get(`/schedule/class/${classId}`),
+
+  // Расписание учителя по ID
+  getTeacherSchedule: (teacherId) =>
+    bilimClassClient.get(`/schedule/teacher/${teacherId}`),
 };
 
 export default scheduleApi;

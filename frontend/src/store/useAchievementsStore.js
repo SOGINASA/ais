@@ -1,30 +1,43 @@
 import { create } from 'zustand';
 import { achievementsApi } from '../api/bilimclass/achievements';
 
-export const useAchievementsStore = create((set) => ({
+export const useAchievementsStore = create((set, get) => ({
   achievements: [],
+  leaderboard: [],
+  statistics: null,
   loading: false,
   error: null,
 
-  // Загрузить достижения студента
-  fetchAchievements: async (studentId) => {
+  // Загрузить портфолио текущего студента (JWT)
+  fetchAchievements: async () => {
     set({ loading: true, error: null });
     try {
-      const response = await achievementsApi.getAchievements(studentId);
-      const data = response.data?.data ?? response.data ?? [];
-      set({ achievements: Array.isArray(data) ? data : [], loading: false });
+      const response = await achievementsApi.getPortfolio();
+      const data = response.data ?? [];
+      const statistics = response.statistics ?? null;
+      set({ achievements: Array.isArray(data) ? data : [], statistics, loading: false });
     } catch (error) {
       set({ achievements: [], error: error.message, loading: false });
     }
   },
 
-  // Получить достижения по типу
-  getAchievementsByType: (type, achievements) => {
+  fetchLeaderboard: async () => {
+    set({ loading: true, error: null });
+    try {
+      const response = await achievementsApi.getLeaderboard();
+      const data = response.data ?? [];
+      set({ leaderboard: Array.isArray(data) ? data : [], loading: false });
+    } catch (error) {
+      set({ leaderboard: [], error: error.message, loading: false });
+    }
+  },
+
+  getAchievementsByType: (type) => {
+    const { achievements } = get();
     return achievements.filter(a => a.type === type);
   },
 
-  // Сброс состояния
-  reset: () => set({ achievements: [], loading: false, error: null }),
+  reset: () => set({ achievements: [], leaderboard: [], statistics: null, loading: false, error: null }),
 }));
 
 export default useAchievementsStore;

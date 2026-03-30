@@ -1,53 +1,57 @@
 import { create } from 'zustand';
 import { studentsApi } from '../api/bilimclass/students';
 
+// Стор для данных учителя: классы и студенты
 export const useStudentsStore = create((set, get) => ({
+  classes: [],
   students: [],
-  currentStudent: null,
+  riskStudents: [],
+  selectedClassId: null,
   loading: false,
   error: null,
 
-  // Загрузить всех студентов
-  fetchStudents: async () => {
+  // Загрузить классы учителя
+  fetchTeacherClasses: async () => {
     set({ loading: true, error: null });
     try {
-      const response = await studentsApi.getStudents();
-      set({ students: response.data, loading: false });
+      const response = await studentsApi.getTeacherClasses();
+      const data = response.data ?? [];
+      set({ classes: Array.isArray(data) ? data : [], loading: false });
     } catch (error) {
-      set({ error: error.message, loading: false });
+      set({ classes: [], error: error.message, loading: false });
     }
   },
 
-  // Загрузить конкретного студента
-  fetchStudent: async (id) => {
-    set({ loading: true, error: null });
+  // Загрузить студентов класса с аналитикой
+  fetchClassStudents: async (classId) => {
+    set({ loading: true, error: null, selectedClassId: classId });
     try {
-      const response = await studentsApi.getStudent(id);
-      set({ currentStudent: response.data, loading: false });
+      const response = await studentsApi.getClassStudents(classId);
+      const data = response.data ?? [];
+      set({ students: Array.isArray(data) ? data : [], loading: false });
     } catch (error) {
-      set({ error: error.message, loading: false });
+      set({ students: [], error: error.message, loading: false });
     }
   },
 
-  // Установить текущего студента
-  setCurrentStudent: (student) => {
-    set({ currentStudent: student });
+  // Загрузить студентов в зоне риска
+  fetchRiskStudents: async () => {
+    set({ loading: true, error: null });
+    try {
+      const response = await studentsApi.getRiskStudents();
+      const data = response.data ?? [];
+      set({ riskStudents: Array.isArray(data) ? data : [], loading: false });
+    } catch (error) {
+      set({ riskStudents: [], error: error.message, loading: false });
+    }
   },
 
-  // Получить студента по ID
   getStudentById: (id) => {
     const { students } = get();
-    return students.find(s => s.id === id);
+    return students.find(s => s.user?.id === id || s.id === id);
   },
 
-  // Получить студентов по классу
-  getStudentsByClass: (className) => {
-    const { students } = get();
-    return students.filter(s => s.class === className);
-  },
-
-  // Сброс состояния
-  reset: () => set({ students: [], currentStudent: null, loading: false, error: null }),
+  reset: () => set({ classes: [], students: [], riskStudents: [], selectedClassId: null, loading: false, error: null }),
 }));
 
 export default useStudentsStore;

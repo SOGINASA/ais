@@ -2,27 +2,24 @@ import { useEffect, useMemo } from 'react';
 import { useScheduleStore } from '../store/useScheduleStore';
 
 /**
- * Хук для загрузки расписания класса
- * @param {string} className - например "10A"
+ * Хук для загрузки расписания текущего студента (JWT-based)
  * @returns {Object} { schedule, weekSchedule, loading, error, refetch }
  */
-export const useClassSchedule = (className) => {
+export const useClassSchedule = () => {
   const schedule = useScheduleStore((state) => state.schedule);
   const loading = useScheduleStore((state) => state.loading);
   const error = useScheduleStore((state) => state.error);
   const fetchSchedule = useScheduleStore((state) => state.fetchSchedule);
 
   useEffect(() => {
-    if (className) {
-      fetchSchedule(className);
-    }
-  }, [className, fetchSchedule]);
+    fetchSchedule();
+  }, [fetchSchedule]);
 
   const weekSchedule = useMemo(() => {
     const safeSchedule = Array.isArray(schedule) ? schedule : [];
     return [1, 2, 3, 4, 5].map((day) => ({
       day,
-      lessons: safeSchedule.filter((s) => s.day_of_week === day),
+      lessons: safeSchedule.filter((s) => s.day_of_week === day - 1 || s.day_of_week === day),
     }));
   }, [schedule]);
 
@@ -31,7 +28,7 @@ export const useClassSchedule = (className) => {
     weekSchedule,
     loading,
     error,
-    refetch: () => fetchSchedule(className),
+    refetch: fetchSchedule,
   };
 };
 

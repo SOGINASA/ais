@@ -25,8 +25,14 @@ class User(db.Model):
     full_name = db.Column(db.String(100))
     avatar_url = db.Column(db.String(500), nullable=True)
     user_type = db.Column(db.String(20), default='user')  # user, admin
+    role = db.Column(db.String(20), default='student')  # student, teacher, parent, admin
     is_active = db.Column(db.Boolean, default=True)
     is_verified = db.Column(db.Boolean, default=False)
+    
+    # Profile fields
+    class_name = db.Column(db.String(10), nullable=True)  # e.g., "10A" for students
+    phone = db.Column(db.String(20), nullable=True)
+    birthday = db.Column(db.Date, nullable=True)
 
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     last_login = db.Column(db.DateTime)
@@ -299,3 +305,228 @@ class Feedback(db.Model):
                 'email': self.user.email or '—',
             }
         return data
+
+
+# ========== AQBOBEK LYCEUM MODELS ==========
+
+class Subject(db.Model):
+    """Школьные предметы"""
+    __tablename__ = 'subjects'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False, unique=True, index=True)
+    code = db.Column(db.String(10), nullable=True)  # e.g., 'MATH', 'ENG'
+    description = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'code': self.code,
+            'description': self.description,
+        }
+
+
+class Grade(db.Model):
+    """Оценки студентов"""
+    __tablename__ = 'grades'
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=True)
+    teacher_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
+    
+    score = db.Column(db.Integer, nullable=False)  # 1-5 балл
+    type = db.Column(db.String(20), default='lesson')  # lesson, lab, quiz, test, exam
+    weight = db.Column(db.Float, default=1.0)  # вес оценки для среднего
+    
+    date = db.Column(db.Date, nullable=False, index=True)
+    quarter = db.Column(db.Integer, nullable=True)  # 1-4 четверть
+    
+    description = db.Column(db.String(255), nullable=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    
+    student = db.relationship('User', foreign_keys=[student_id], backref=db.backref('grades_as_student', lazy='dynamic', cascade='all, delete-orphan'))
+    teacher = db.relationship('User', foreign_keys=[teacher_id], backref=db.backref('grades_as_teacher', lazy='dynamic'))
+    subject = db.relationship('Subject', backref=db.backref('grades', lazy='dynamic'))
+    
+    __table_args__ = (
+        db.Index('ix_grade_student_date', 'student_id', 'date'),
+        db.Index('ix_grade_student_quarter', 'student_id', 'quarter'),
+    )
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'studentId': self.student_id,
+            'subjectId': self.subject_id,
+            'subject': self.subject.name if self.subject else None,
+            'teacherId': self.teacher_id,
+            'score': self.score,
+            'type': self.type,
+            'weight': self.weight,
+            'date': self.date.isoformat() if self.date else None,
+            'quarter': self.quarter,
+            'description': self.description,
+        }
+
+
+class ClassModel(db.Model):
+    """Классы (группы) студентов"""
+    __tablename__ = 'classes'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(10), nullable=False, unique=True, index=True)  # e.g., "10A", "10B"
+    parallel = db.Column(db.String(2), nullable=True)  # e.g., "10"
+    grade_level = db.Column(db.Integer, nullable=True)  # e.g., 10
+    teacher_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  # классный руководитель
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    
+    teacher = db.relationship('User', backref=db.backref('classes_managed', lazy='dynamic'))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'parallel': self.parallel,
+            'gradeLevel': self.grade_level,
+            'teacherId': self.teacher_id,
+            'teacher': self.teacher.full_name if self.teacher else None,
+        }
+
+
+class Schedule(db.Model):
+    """Расписание уроков"""
+    __tablename__ = 'schedules'
+    id = db.Column(db.Integer, primary_key=True)
+    class_id = db.Column(db.Integer, db.ForeignKey('classes.id'), nullable=False, index=True)
+    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=False, index=True)
+    teacher_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    
+    day_of_week = db.Column(db.Integer, nullable=False)  # 0-6 (пн-воскресенье)
+    time_slot = db.Column(db.Integer, nullable=False)  # 1-8 урок
+    start_time = db.Column(db.String(5), nullable=True)  # HH:MM
+    end_time = db.Column(db.String(5), nullable=True)    # HH:MM
+    
+    room = db.Column(db.String(10), nullable=True)  # кабинет
+    lesson_type = db.Column(db.String(20), default='lesson')  # lesson, lab, workshop
+    
+    active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    
+    class_model = db.relationship('ClassModel', backref=db.backref('schedules', lazy='dynamic'))
+    subject = db.relationship('Subject', backref=db.backref('schedules', lazy='dynamic'))
+    teacher = db.relationship('User', foreign_keys=[teacher_id], backref=db.backref('schedules', lazy='dynamic'))
+    
+    __table_args__ = (
+        db.Index('ix_schedule_class_day', 'class_id', 'day_of_week'),
+        db.Index('ix_schedule_teacher_time', 'teacher_id', 'day_of_week', 'time_slot'),
+    )
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'classId': self.class_id,
+            'class': self.class_model.name if self.class_model else None,
+            'subjectId': self.subject_id,
+            'subject': self.subject.name if self.subject else None,
+            'teacherId': self.teacher_id,
+            'teacher': self.teacher.full_name if self.teacher else None,
+            'dayOfWeek': self.day_of_week,
+            'timeSlot': self.time_slot,
+            'startTime': self.start_time,
+            'endTime': self.end_time,
+            'room': self.room,
+            'lessonType': self.lesson_type,
+        }
+
+
+class Achievement(db.Model):
+    """Достижения студентов"""
+    __tablename__ = 'achievements'
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    
+    title = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    icon = db.Column(db.String(50), nullable=True)  # emoji или URL
+    type = db.Column(db.String(30), nullable=True)  # grades, attendance, olympiad, test, etc
+    
+    points = db.Column(db.Integer, default=0)  # баллы за достижение
+    
+    achieved_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    
+    student = db.relationship('User', backref=db.backref('achievements', lazy='dynamic', cascade='all, delete-orphan'))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'studentId': self.student_id,
+            'title': self.title,
+            'description': self.description,
+            'icon': self.icon,
+            'type': self.type,
+            'points': self.points,
+            'achievedAt': _utc_iso(self.achieved_at),
+        }
+
+
+class Attendance(db.Model):
+    """Посещаемость"""
+    __tablename__ = 'attendances'
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    schedule_id = db.Column(db.Integer, db.ForeignKey('schedules.id'), nullable=True)
+    
+    date = db.Column(db.Date, nullable=False, index=True)
+    status = db.Column(db.String(20), default='present')  # present, absent, late, excused
+    
+    marked_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    notes = db.Column(db.Text, nullable=True)
+    
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    
+    student = db.relationship('User', foreign_keys=[student_id], backref=db.backref('attendances', lazy='dynamic'))
+    marked_by = db.relationship('User', foreign_keys=[marked_by_id], backref=db.backref('marked_attendances', lazy='dynamic'))
+    
+    __table_args__ = (
+        db.Index('ix_attendance_student_date', 'student_id', 'date'),
+    )
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'studentId': self.student_id,
+            'scheduleId': self.schedule_id,
+            'date': self.date.isoformat() if self.date else None,
+            'status': self.status,
+            'markedById': self.marked_by_id,
+            'notes': self.notes,
+        }
+
+
+class AnalyticsSnapshot(db.Model):
+    """Снимок аналитики для студента"""
+    __tablename__ = 'analytics_snapshots'
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    
+    average_score = db.Column(db.Float, nullable=True)
+    scores_trend = db.Column(db.Float, nullable=True)  # в процентах, где >0 улучшение
+    risk_level = db.Column(db.String(20), default='normal')  # normal, warning, critical
+    
+    snapshot_metadata = db.Column(db.Text, nullable=True)  # JSON с доп данными
+    
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+    
+    student = db.relationship('User', backref=db.backref('analytics_snapshots', lazy='dynamic'))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'studentId': self.student_id,
+            'averageScore': self.average_score,
+            'scoresTrend': self.scores_trend,
+            'riskLevel': self.risk_level,
+            'createdAt': _utc_iso(self.created_at),
+        }

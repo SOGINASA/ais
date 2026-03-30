@@ -1,50 +1,45 @@
 import React, { useEffect, useState } from 'react';
-import { useGradesStore } from '../store/useGradesStore';
 import { useStudentsStore } from '../store/useStudentsStore';
 import { Card, Badge } from '../components/ui';
 
 export const TeacherDashboard = () => {
-  const { fetchStudents, students } = useStudentsStore();
-  const { grades, fetchGrades } = useGradesStore();
-  const [selectedClass, setSelectedClass] = useState('10A');
-  const [riskStudents, setRiskStudents] = useState([]);
+  const {
+    classes,
+    students,
+    riskStudents,
+    loading,
+    fetchTeacherClasses,
+    fetchClassStudents,
+    fetchRiskStudents,
+  } = useStudentsStore();
+
+  const [selectedClass, setSelectedClass] = useState(null);
 
   useEffect(() => {
-    fetchStudents();
-  }, [fetchStudents]);
+    fetchTeacherClasses();
+    fetchRiskStudents();
+  }, [fetchTeacherClasses, fetchRiskStudents]);
 
   useEffect(() => {
-    const classStudents = students.filter((s) => s.class === selectedClass);
-    classStudents.forEach((student) => {
-      fetchGrades(student.id);
-    });
-  }, [selectedClass, students, fetchGrades]);
+    if (classes.length > 0 && !selectedClass) {
+      const first = classes[0];
+      setSelectedClass(first);
+      fetchClassStudents(first.id);
+    }
+  }, [classes, selectedClass, fetchClassStudents]);
 
-  useEffect(() => {
-    const classStudents = students.filter((s) => s.class === selectedClass);
+  const handleSelectClass = (cls) => {
+    setSelectedClass(cls);
+    fetchClassStudents(cls.id);
+  };
 
-    const atRiskStudents = classStudents.filter((student) => {
-      const studentGrades = grades.filter((g) => g.student_id === student.id);
-      if (studentGrades.length === 0) return false;
-
-      const average = studentGrades.reduce((sum, g) => sum + g.grade, 0) / studentGrades.length;
-      return average < 3.5;
-    });
-
-    setRiskStudents(atRiskStudents);
-  }, [students, grades, selectedClass]);
-
-  const classStudents = students.filter((s) => s.class === selectedClass);
-
-  const getRiskLevel = (studentId) => {
-    const studentGrades = grades.filter((g) => g.student_id === studentId);
-    if (studentGrades.length === 0) return 'unknown';
-
-    const average = studentGrades.reduce((sum, g) => sum + g.grade, 0) / studentGrades.length;
-    if (average < 2.5) return 'critical';
-    if (average < 3) return 'high';
-    if (average < 3.5) return 'medium';
-    return 'safe';
+  const getRiskBadge = (riskLevel) => {
+    const map = {
+      critical: { variant: 'danger', label: '🔴 Критически' },
+      warning: { variant: 'warning', label: '🟠 Требует внимания' },
+      normal: { variant: 'success', label: '🟢 В норме' },
+    };
+    return map[riskLevel] || { variant: 'info', label: '⚪ Нет данных' };
   };
 
   return (
@@ -53,7 +48,7 @@ export const TeacherDashboard = () => {
         <Card className="bg-gradient-to-br from-blue-50 to-blue-100">
           <div className="text-center">
             <p className="text-gray-600 text-sm font-medium">Студентов в классе</p>
-            <p className="text-3xl font-bold text-blue-600 mt-1">{classStudents.length}</p>
+            <p className="text-3xl font-bold text-blue-600 mt-1">{students.length}</p>
           </div>
         </Card>
 
@@ -66,97 +61,88 @@ export const TeacherDashboard = () => {
 
         <Card className="bg-gradient-to-br from-green-50 to-green-100">
           <div className="text-center">
-            <p className="text-gray-600 text-sm font-medium">Отличников</p>
-            <p className="text-3xl font-bold text-green-600 mt-1">
-              {classStudents.filter((s) => getRiskLevel(s.id) === 'safe').length}
-            </p>
+            <p className="text-gray-600 text-sm font-medium">Классов</p>
+            <p className="text-3xl font-bold text-green-600 mt-1">{classes.length}</p>
           </div>
         </Card>
 
         <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100">
           <div className="text-center">
-            <p className="text-gray-600 text-sm font-medium">Всего оценок</p>
-            <p className="text-3xl font-bold text-yellow-600 mt-1">{grades.length}</p>
+            <p className="text-gray-600 text-sm font-medium">Критических</p>
+            <p className="text-3xl font-bold text-yellow-600 mt-1">
+              {riskStudents.filter(s => s.risk_level === 'critical').length}
+            </p>
           </div>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <Card title="📊 Выбор класса и статистика">
-            <div className="mb-6">
-              <div className="flex gap-2 flex-wrap">
-                {['10A', '10B', '10C'].map((className) => (
+          <Card title="📊 Классы и студенты">
+            {classes.length > 0 && (
+              <div className="mb-6 flex gap-2 flex-wrap">
+                {classes.map((cls) => (
                   <button
-                    key={className}
-                    onClick={() => setSelectedClass(className)}
+                    key={cls.id}
+                    onClick={() => handleSelectClass(cls)}
                     className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                      selectedClass === className
+                      selectedClass?.id === cls.id
                         ? 'bg-blue-600 text-white'
                         : 'bg-gray-200 text-gray-900 hover:bg-gray-300'
                     }`}
                   >
-                    {className}
+                    {cls.name}
                   </button>
                 ))}
               </div>
-            </div>
+            )}
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-100 border-b-2 border-gray-300">
-                  <tr>
-                    <th className="text-left px-4 py-3 font-semibold text-gray-900">ФИО</th>
-                    <th className="text-center px-4 py-3 font-semibold text-gray-900">Средний балл</th>
-                    <th className="text-center px-4 py-3 font-semibold text-gray-900">Оценок</th>
-                    <th className="text-center px-4 py-3 font-semibold text-gray-900">Статус</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {classStudents.map((student) => {
-                    const studentGrades = grades.filter((g) => g.student_id === student.id);
-                    const average =
-                      studentGrades.length > 0
-                        ? (
-                            studentGrades.reduce((sum, g) => sum + g.grade, 0) /
-                            studentGrades.length
-                          ).toFixed(2)
+            {loading ? (
+              <p className="text-gray-500 text-sm">Загрузка...</p>
+            ) : students.length === 0 ? (
+              <p className="text-gray-500 text-sm">
+                {classes.length === 0
+                  ? 'Нет закреплённых классов'
+                  : 'Нет студентов в этом классе'}
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-100 border-b-2 border-gray-300">
+                    <tr>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-900">ФИО</th>
+                      <th className="text-center px-4 py-3 font-semibold text-gray-900">Средний балл</th>
+                      <th className="text-center px-4 py-3 font-semibold text-gray-900">Посещаемость</th>
+                      <th className="text-center px-4 py-3 font-semibold text-gray-900">Статус</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {students.map((item) => {
+                      const student = item.user || item;
+                      const analytics = item.analytics || {};
+                      const avg = analytics.average_score ?? 'N/A';
+                      const attendance = analytics.attendance_rate != null
+                        ? `${analytics.attendance_rate}%`
                         : 'N/A';
+                      const risk = getRiskBadge(analytics.risk_level);
 
-                    const riskLevel = getRiskLevel(student.id);
-
-                    const riskVariants = {
-                      critical: 'danger',
-                      high: 'warning',
-                      medium: 'warning',
-                      safe: 'success',
-                      unknown: 'info',
-                    };
-
-                    const riskLabels = {
-                      critical: '🔴 Критически',
-                      high: '🟠 Высокий риск',
-                      medium: '🟡 Средний риск',
-                      safe: '🟢 В норме',
-                      unknown: '⚪ Нет данных',
-                    };
-
-                    return (
-                      <tr key={student.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-4 py-3 font-medium text-gray-900">{student.full_name}</td>
-                        <td className="px-4 py-3 text-center text-gray-900">{average}</td>
-                        <td className="px-4 py-3 text-center text-gray-600">{studentGrades.length}</td>
-                        <td className="px-4 py-3 text-center">
-                          <Badge variant={riskVariants[riskLevel]}>
-                            {riskLabels[riskLevel]}
-                          </Badge>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                      return (
+                        <tr key={student.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-4 py-3 font-medium text-gray-900">{student.name || student.full_name}</td>
+                          <td className="px-4 py-3 text-center text-gray-900">
+                            {typeof avg === 'number' ? avg.toFixed(2) : avg}
+                          </td>
+                          <td className="px-4 py-3 text-center text-gray-600">{attendance}</td>
+                          <td className="px-4 py-3 text-center">
+                            <Badge variant={risk.variant}>{risk.label}</Badge>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </Card>
         </div>
 
@@ -164,22 +150,16 @@ export const TeacherDashboard = () => {
           <Card title="⚠️ Early Warning System">
             {riskStudents.length > 0 ? (
               <div className="space-y-3">
-                {riskStudents.map((student) => {
-                  const studentGrades = grades.filter((g) => g.student_id === student.id);
-                  const average = (
-                    studentGrades.reduce((sum, g) => sum + g.grade, 0) / studentGrades.length
-                  ).toFixed(2);
-
-                  return (
-                    <div key={student.id} className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                      <p className="font-semibold text-red-900 text-sm">{student.full_name}</p>
-                      <p className="text-xs text-red-700 mt-1">Средний: {average}</p>
-                      <p className="text-xs text-red-600 mt-2">
-                        ⚠️ Требует внимания преподавателя
-                      </p>
-                    </div>
-                  );
-                })}
+                {riskStudents.map((student) => (
+                  <div key={student.student_id} className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="font-semibold text-red-900 text-sm">{student.name}</p>
+                    <p className="text-xs text-red-700 mt-1">Класс: {student.class}</p>
+                    <p className="text-xs text-red-700">Средний: {typeof student.average === 'number' ? student.average.toFixed(2) : student.average}</p>
+                    {student.reasons?.length > 0 && (
+                      <p className="text-xs text-red-600 mt-1">⚠️ {student.reasons[0]}</p>
+                    )}
+                  </div>
+                ))}
               </div>
             ) : (
               <p className="text-gray-500 text-sm">Нет студентов в зоне риска</p>

@@ -7,60 +7,53 @@ export const useGradesStore = create((set, get) => ({
   loading: false,
   error: null,
 
-  // Загрузить все оценки студента
-  fetchGrades: async (studentId) => {
+  fetchGrades: async (params = {}) => {
     set({ loading: true, error: null });
     try {
-      const response = await gradesApi.getGrades(studentId);
-      const data = response.data?.data ?? response.data ?? [];
+      const response = await gradesApi.getGrades(params);
+      const data = response.data ?? [];
       set({ grades: Array.isArray(data) ? data : [], loading: false });
     } catch (error) {
       set({ grades: [], error: error.message, loading: false });
     }
   },
 
-  // Загрузить четвертные оценки
-  fetchQuarterGrades: async (studentId) => {
+  fetchQuarterGrades: async () => {
     set({ loading: true, error: null });
     try {
-      const response = await gradesApi.getQuarterGrades(studentId);
-      const data = response.data?.data ?? response.data ?? [];
+      const response = await gradesApi.getQuarterGrades();
+      const data = response.data ?? [];
       set({ quarterGrades: Array.isArray(data) ? data : [], loading: false });
     } catch (error) {
       set({ quarterGrades: [], error: error.message, loading: false });
     }
   },
 
-  // Загрузить оценки по предмету
-  fetchGradesBySubject: async (studentId, subject) => {
+  fetchGradesBySubject: async (subjectId) => {
     set({ loading: true, error: null });
     try {
-      const response = await gradesApi.getGradesBySubject(studentId, subject);
-      const data = response.data?.data ?? response.data ?? [];
+      const response = await gradesApi.getGradesBySubject(subjectId);
+      const data = response.data ?? [];
       set({ grades: Array.isArray(data) ? data : [], loading: false });
     } catch (error) {
       set({ grades: [], error: error.message, loading: false });
     }
   },
 
-  // Получить средний балл по предмету
   getAverageBySubject: (subject) => {
     const { grades } = get();
     const subjectGrades = grades.filter(g => g.subject === subject);
     if (subjectGrades.length === 0) return 0;
-    
-    const weighted = subjectGrades.reduce((sum, g) => sum + g.grade * g.weight, 0);
-    const totalWeight = subjectGrades.reduce((sum, g) => sum + g.weight, 0);
+    const weighted = subjectGrades.reduce((sum, g) => sum + g.score * (g.weight || 1), 0);
+    const totalWeight = subjectGrades.reduce((sum, g) => sum + (g.weight || 1), 0);
     return (weighted / totalWeight).toFixed(2);
   },
 
-  // Получить список всех предметов
   getSubjects: () => {
     const { grades } = get();
-    return [...new Set(grades.map(g => g.subject))];
+    return [...new Set(grades.map(g => g.subject?.name || g.subject).filter(Boolean))];
   },
 
-  // Сброс состояния
   reset: () => set({ grades: [], quarterGrades: [], loading: false, error: null }),
 }));
 

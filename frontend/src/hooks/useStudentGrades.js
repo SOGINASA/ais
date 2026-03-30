@@ -2,19 +2,16 @@ import { useEffect } from 'react';
 import { useGradesStore } from '../store/useGradesStore';
 
 /**
- * Хук для загрузки оценок студента с автоматическим эффектом
- * @param {number} studentId
+ * Хук для загрузки оценок текущего студента (JWT-based, studentId не нужен)
  * @returns {Object} { grades, quarterGrades, loading, error, refetch }
  */
-export const useStudentGrades = (studentId) => {
+export const useStudentGrades = () => {
   const { grades, quarterGrades, loading, error, fetchGrades, fetchQuarterGrades } = useGradesStore();
 
   useEffect(() => {
-    if (studentId) {
-      fetchGrades(studentId);
-      fetchQuarterGrades(studentId);
-    }
-  }, [studentId, fetchGrades, fetchQuarterGrades]);
+    fetchGrades();
+    fetchQuarterGrades();
+  }, [fetchGrades, fetchQuarterGrades]);
 
   return {
     grades,
@@ -22,8 +19,8 @@ export const useStudentGrades = (studentId) => {
     loading,
     error,
     refetch: () => {
-      fetchGrades(studentId);
-      fetchQuarterGrades(studentId);
+      fetchGrades();
+      fetchQuarterGrades();
     },
   };
 };

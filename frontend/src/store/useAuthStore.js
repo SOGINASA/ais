@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 
+const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5000';
+
 export const useAuthStore = create((set) => ({
   user: null,
   isAuthenticated: false,
@@ -8,32 +10,74 @@ export const useAuthStore = create((set) => ({
   loading: false,
   error: null,
 
-  // Mock login
-  login: async (email, password) => {
+  // Real login
+  login: async (identifier, password) => {
     set({ loading: true, error: null });
     try {
-      // Здесь будет реальная авторизация с backend
-      // Для теста используем mock данные
-      const mockUser = {
-        id: 1,
-        email,
-        full_name: 'Айман Смагулов',
-        role: 'student',
-        class: '10A',
-      };
+      const response = await fetch(`${API_BASE}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier, password }),
+      });
 
-      localStorage.setItem('access_token', 'mock_token_12345');
-      localStorage.setItem('user', JSON.stringify(mockUser));
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Login failed');
+      }
+
+      const { user, access_token, refresh_token } = data;
+
+      localStorage.setItem('access_token', access_token);
+      localStorage.setItem('refresh_token', refresh_token);
+      localStorage.setItem('user', JSON.stringify(user));
 
       set({
-        user: mockUser,
+        user,
         isAuthenticated: true,
-        role: mockUser.role,
-        accessToken: 'mock_token_12345',
+        role: user.user_type || user.role,
+        accessToken: access_token,
         loading: false,
       });
 
-      return mockUser;
+      return user;
+    } catch (error) {
+      set({ error: error.message, loading: false });
+      throw error;
+    }
+  },
+
+  // Real register
+  register: async (identifier, password, full_name) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await fetch(`${API_BASE}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier, password, full_name }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Registration failed');
+      }
+
+      const { user, access_token, refresh_token } = data;
+
+      localStorage.setItem('access_token', access_token);
+      localStorage.setItem('refresh_token', refresh_token);
+      localStorage.setItem('user', JSON.stringify(user));
+
+      set({
+        user,
+        isAuthenticated: true,
+        role: user.user_type || user.role,
+        accessToken: access_token,
+        loading: false,
+      });
+
+      return user;
     } catch (error) {
       set({ error: error.message, loading: false });
       throw error;
@@ -43,6 +87,7 @@ export const useAuthStore = create((set) => ({
   // Logout
   logout: () => {
     localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
     set({
       user: null,

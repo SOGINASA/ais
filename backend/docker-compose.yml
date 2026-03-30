@@ -1,26 +1,56 @@
-version: '3.8'
-
 services:
   backend:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: app-backend
+    container_name: aqbobek_backend
     ports:
       - "5000:5000"
     env_file:
       - .env
     environment:
       - FLASK_ENV=production
+      - FLASK_APP=app.py
       - SECRET_KEY=${SECRET_KEY:-super-secret-key-change-me}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-jwt-secret-key-change-me}
-      - DATABASE_URL=sqlite:////app/database/database.db
+      - DATABASE_URL=sqlite:////app/database/aqbobek.db
+      - CORS_ORIGINS=http://frontend:3000,http://localhost:3000,http://localhost:3001,http://0.0.0.0:3000
     volumes:
       - ./database:/app/database
+      - ./logs:/app/logs
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/api"]
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/auth/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
+      start_period: 40s
+    networks:
+      - aqbobek_network
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: aqbobek_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_BASE=http://backend:5000
+      - REACT_APP_USE_MOCK=false
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - aqbobek_network
+
+networks:
+  aqbobek_network:
+    driver: bridge

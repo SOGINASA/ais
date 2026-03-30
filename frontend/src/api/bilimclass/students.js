@@ -1,21 +1,25 @@
-import bilimClassClient, { mockApiRequest } from './client';
-
-const USE_MOCK = process.env.REACT_APP_USE_MOCK !== 'false';
+import bilimClassClient from './client';
 
 export const studentsApi = {
-  getStudents: () => {
-    if (USE_MOCK) {
-      return mockApiRequest('/students');
-    }
-    return bilimClassClient.get('/students');
-  },
+  // Для учителя: получить классы
+  getTeacherClasses: () =>
+    bilimClassClient.get('/teacher/classes'),
 
-  getStudent: (id) => {
-    if (USE_MOCK) {
-      return mockApiRequest(`/students/${id}`);
-    }
-    return bilimClassClient.get(`/students/${id}`);
-  },
+  // Для учителя: получить студентов класса с аналитикой
+  getClassStudents: (classId) =>
+    bilimClassClient.get(`/teacher/class/${classId}/students`),
+
+  // Для учителя: студенты в зоне риска
+  getRiskStudents: () =>
+    bilimClassClient.get('/teacher/risk-students'),
+
+  // Для учителя: выставить оценку
+  addGrade: (data) =>
+    bilimClassClient.post('/teacher/grade', data),
+
+  // Для учителя: отметить посещаемость
+  markAttendance: (records) =>
+    bilimClassClient.post('/teacher/mark-attendance', { records }),
 };
 
 export default studentsApi;
