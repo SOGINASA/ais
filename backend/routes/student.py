@@ -149,7 +149,7 @@ def get_student_portfolio():
     
     return jsonify({
         'success': True,
-        'data': achievements,
+        'data': [a.to_dict() for a in achievements],
         'grouped': by_type,
         'statistics': stats,
     }), 200
@@ -163,34 +163,34 @@ def get_student_schedule():
     user = User.query.get(int(user_id))
     
     if not user or not user.class_name:
-        return jsonify({'error': 'Student class not found'}), 400
-    
+        return jsonify({'success': True, 'class': None, 'data': [], 'grouped': {}}), 200
+
     # Находим класс
     class_obj = ClassModel.query.filter_by(name=user.class_name).first()
-    
+
     if not class_obj:
-        return jsonify({'error': 'Class not found'}), 404
-    
+        return jsonify({'success': True, 'class': user.class_name, 'data': [], 'grouped': {}}), 200
+
     # Получаем расписание
     schedule = Schedule.query.filter_by(class_id=class_obj.id, active=True).order_by(
         Schedule.day_of_week,
         Schedule.time_slot
     ).all()
-    
+
     # Группируем по дням
     by_day = {}
     day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
-    
+
     for lesson in schedule:
         day_name = day_names[lesson.day_of_week] if lesson.day_of_week < len(day_names) else f"Day {lesson.day_of_week}"
         if day_name not in by_day:
             by_day[day_name] = []
         by_day[day_name].append(lesson.to_dict())
-    
+
     return jsonify({
         'success': True,
         'class': user.class_name,
-        'data': schedule,
+        'data': [s.to_dict() for s in schedule],
         'grouped': by_day,
     }), 200
 

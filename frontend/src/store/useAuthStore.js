@@ -35,7 +35,7 @@ export const useAuthStore = create((set) => ({
       set({
         user,
         isAuthenticated: true,
-        role: user.user_type || user.role,
+        role: user.role || user.user_type,
         accessToken: access_token,
         loading: false,
       });
@@ -72,7 +72,7 @@ export const useAuthStore = create((set) => ({
       set({
         user,
         isAuthenticated: true,
-        role: user.user_type || user.role,
+        role: user.role || user.user_type,
         accessToken: access_token,
         loading: false,
       });
@@ -109,7 +109,7 @@ export const useAuthStore = create((set) => ({
         set({
           user,
           isAuthenticated: true,
-          role: user.role,
+          role: user.role || user.user_type,
           accessToken: token,
         });
         return true;

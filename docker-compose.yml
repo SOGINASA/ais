@@ -13,7 +13,7 @@ services:
       - FLASK_APP=app.py
       - SECRET_KEY=${SECRET_KEY:-super-secret-key-change-me}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-jwt-secret-key-change-me}
-      - DATABASE_URL=sqlite:////app/database/aqbobek.db
+      - DATABASE_URL=sqlite:////app/database/database.db
       - CORS_ORIGINS=http://frontend:3000,http://localhost:3000,http://localhost:3001,http://0.0.0.0:3000
     volumes:
       - ./backend/database:/app/database

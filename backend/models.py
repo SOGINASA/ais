@@ -72,6 +72,7 @@ class User(db.Model):
             'full_name': self.full_name,
             'avatar_url': self.avatar_url,
             'user_type': self.user_type,
+            'role': self.role,
             'onboarding_completed': self.onboarding_completed,
             'created_at': _utc_iso(self.created_at),
             'last_login': _utc_iso(self.last_login),
