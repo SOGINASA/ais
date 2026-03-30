@@ -5,7 +5,7 @@ const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5000';
 export const useAuthStore = create((set) => ({
   user: null,
   isAuthenticated: false,
-  role: null, // 'student', 'teacher', 'parent', 'admin', 'kiosk'
+  role: null, // 'student', 'teacher', 'parent', 'admin'
   accessToken: null,
   loading: false,
   error: null,
@@ -123,12 +123,6 @@ export const useAuthStore = create((set) => ({
 
   // Установить роль
   setRole: (role) => set({ role }),
-
-  // Получить роль
-  getRole: () => {
-    // использовать из state
-    return null;
-  },
 }));
 
 export default useAuthStore;
