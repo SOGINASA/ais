@@ -9,19 +9,21 @@ import GradesCard from '../components/GradesCard';
 
 export const StudentDashboard = () => {
   const { user } = useAuth();
-  const { grades, loading: gradesLoading } = useStudentGrades(user?.id);
-  const { schedule, weekSchedule, loading: scheduleLoading } = useClassSchedule(user?.class);
-  const { fetchAchievements, achievements } = useAchievementsStore();
-  const { fetchAttendance, attendance, getAttendanceStats } = useAttendanceStore();
+  const { grades } = useStudentGrades(user?.id);
+  const { weekSchedule } = useClassSchedule(user?.class);
+  const achievements = useAchievementsStore((state) => state.achievements);
+  const fetchAchievements = useAchievementsStore((state) => state.fetchAchievements);
+  const attendance = useAttendanceStore((state) => state.attendance);
+  const fetchAttendance = useAttendanceStore((state) => state.fetchAttendance);
 
   useEffect(() => {
     if (user?.id) {
       fetchAchievements(user.id);
       fetchAttendance(user.id);
     }
-  }, [user?.id, fetchAchievements, fetchAttendance]);
+  }, [user?.id]);
 
-  const attendanceStats = getAttendanceStats(attendance);
+  const attendanceStats = useAttendanceStore((state) => state.getAttendanceStats());
 
   const groupedGrades = grades.reduce((acc, grade) => {
     const subject = grade.subject;
@@ -48,11 +50,13 @@ export const StudentDashboard = () => {
           <div className="text-center">
             <p className="text-gray-600 text-sm font-medium">Средний балл</p>
             <p className="text-3xl font-bold text-blue-600 mt-1">
-              {(
-                Object.values(groupedGrades)
-                  .map(calculateAverage)
-                  .reduce((a, b) => a + b, 0) / Object.keys(groupedGrades).length
-              ).toFixed(2)}
+              {Object.keys(groupedGrades).length > 0
+                ? (
+                    Object.values(groupedGrades)
+                      .map(calculateAverage)
+                      .reduce((a, b) => a + b, 0) / Object.keys(groupedGrades).length
+                  ).toFixed(2)
+                : '0.00'}
             </p>
           </div>
         </Card>
@@ -97,9 +101,7 @@ export const StudentDashboard = () => {
           </Card>
 
           <Card title="📅 Расписание на сегодня">
-            {scheduleLoading ? (
-              <p className="text-gray-500">Загрузка расписания...</p>
-            ) : todaySchedule.length > 0 ? (
+            {todaySchedule.length > 0 ? (
               <div className="space-y-3">
                 {todaySchedule.map((lesson) => (
                   <div

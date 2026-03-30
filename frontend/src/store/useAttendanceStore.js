@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import { attendanceApi } from '../bilimclass/attendance';
+import { attendanceApi } from '../api/bilimclass/attendance';
 
-export const useAttendanceStore = create((set) => ({
+export const useAttendanceStore = create((set, get) => ({
   attendance: [],
   loading: false,
   error: null,
@@ -11,14 +11,15 @@ export const useAttendanceStore = create((set) => ({
     set({ loading: true, error: null });
     try {
       const response = await attendanceApi.getAttendance(studentId);
-      set({ attendance: response.data, loading: false });
+      set({ attendance: response.data || [], loading: false });
     } catch (error) {
-      set({ error: error.message, loading: false });
+      set({ attendance: [], error: error.message, loading: false });
     }
   },
 
   // Получить статистику посещаемости
-  getAttendanceStats: (attendance) => {
+  getAttendanceStats: () => {
+    const { attendance } = get();
     const present = attendance.filter(a => a.status === 'present').length;
     const absent = attendance.filter(a => a.status === 'absent').length;
     const total = attendance.length;

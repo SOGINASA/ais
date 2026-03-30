@@ -1,12 +1,12 @@
-import bilimClassClient from './client';
+import bilimClassClient, { mockApiRequest } from './client';
+
+const USE_MOCK = process.env.REACT_APP_USE_MOCK !== 'false';
 
 export const scheduleApi = {
-  /**
-   * GET /api/schedule?class=10A
-   * @param {string} className
-   * @returns {Promise<Object>} { data: ScheduleItem[] }
-   */
   getSchedule: (className) => {
+    if (USE_MOCK) {
+      return mockApiRequest('/schedule', { class: className });
+    }
     return bilimClassClient.get('/schedule', {
       params: { class: className },
     });

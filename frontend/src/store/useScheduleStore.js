@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import { scheduleApi } from '../bilimclass/schedule';
+import { scheduleApi } from '../api/bilimclass/schedule';
 
-export const useScheduleStore = create((set) => ({
+export const useScheduleStore = create((set, get) => ({
   schedule: [],
   loading: false,
   error: null,
@@ -11,23 +11,25 @@ export const useScheduleStore = create((set) => ({
     set({ loading: true, error: null });
     try {
       const response = await scheduleApi.getSchedule(className);
-      set({ schedule: response.data, loading: false });
+      set({ schedule: response.data || [], loading: false });
     } catch (error) {
-      set({ error: error.message, loading: false });
+      set({ schedule: [], error: error.message, loading: false });
     }
   },
 
   // Получить уроки на определённый день
-  getScheduleByDay: (dayOfWeek, schedule) => {
+  getScheduleByDay: (dayOfWeek) => {
+    const { schedule } = get();
     return schedule.filter(s => s.day_of_week === dayOfWeek);
   },
 
   // Получить расписание на неделю
-  getWeekSchedule: (schedule) => {
+  getWeekSchedule: () => {
+    const { schedule } = get();
     const weekDays = [1, 2, 3, 4, 5]; // Mon-Fri
     return weekDays.map(day => ({
       day,
-      lessons: schedule.filter(s => s.day_of_week === day),
+      lessons: (schedule || []).filter(s => s.day_of_week === day),
     }));
   },
 

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { gradesApi } from '../bilimclass/grades';
+import { gradesApi } from '../api/bilimclass/grades';
 
 export const useGradesStore = create((set, get) => ({
   grades: [],

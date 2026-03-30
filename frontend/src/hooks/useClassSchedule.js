@@ -15,7 +15,7 @@ export const useClassSchedule = (className) => {
     }
   }, [className, fetchSchedule]);
 
-  const weekSchedule = getWeekSchedule(schedule);
+  const weekSchedule = getWeekSchedule();
 
   return {
     schedule,

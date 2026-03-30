@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { studentsApi } from '../bilimclass/students';
+import { studentsApi } from '../api/bilimclass/students';
 
 export const useStudentsStore = create((set, get) => ({
   students: [],

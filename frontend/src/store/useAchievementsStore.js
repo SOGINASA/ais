@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { achievementsApi } from '../bilimclass/achievements';
+import { achievementsApi } from '../api/bilimclass/achievements';
 
 export const useAchievementsStore = create((set) => ({
   achievements: [],
@@ -11,9 +11,9 @@ export const useAchievementsStore = create((set) => ({
     set({ loading: true, error: null });
     try {
       const response = await achievementsApi.getAchievements(studentId);
-      set({ achievements: response.data, loading: false });
+      set({ achievements: response.data || [], loading: false });
     } catch (error) {
-      set({ error: error.message, loading: false });
+      set({ achievements: [], error: error.message, loading: false });
     }
   },
 
