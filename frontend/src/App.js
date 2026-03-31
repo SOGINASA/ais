@@ -16,6 +16,11 @@ import GradesManagement from './pages/admin/GradesManagement';
 import AchievementsManagement from './pages/admin/AchievementsManagement';
 import AttendanceManagement from './pages/admin/AttendanceManagement';
 import ParentDashboard from './pages/parent/ParentDashboard';
+import GradesPage from './pages/student/GradesPage';
+import SchedulePage from './pages/student/SchedulePage';
+import AchievementsPage from './pages/student/AchievementsPage';
+import ClassesPage from './pages/teacher/ClassesPage';
+import AnalyticsPage from './pages/teacher/AnalyticsPage';
 import NotificationContainer from './components/NotificationContainer';
 import './styles/globals.css';
 
@@ -85,6 +90,21 @@ function App() {
               <Layout><StudentDashboard /></Layout>
             </ProtectedRoute>
           } />
+          <Route path="/student/grades" element={
+            <ProtectedRoute allowedRoles={['student']}>
+              <Layout><GradesPage /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/student/schedule" element={
+            <ProtectedRoute allowedRoles={['student']}>
+              <Layout><SchedulePage /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/student/achievements" element={
+            <ProtectedRoute allowedRoles={['student']}>
+              <Layout><AchievementsPage /></Layout>
+            </ProtectedRoute>
+          } />
           <Route path="/student/*" element={
             <ProtectedRoute allowedRoles={['student']}>
               <Layout><StudentDashboard /></Layout>
@@ -95,6 +115,16 @@ function App() {
           <Route path="/teacher" element={
             <ProtectedRoute allowedRoles={['teacher']}>
               <Layout><TeacherDashboard /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/teacher/students" element={
+            <ProtectedRoute allowedRoles={['teacher']}>
+              <Layout><ClassesPage /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/teacher/analytics" element={
+            <ProtectedRoute allowedRoles={['teacher']}>
+              <Layout><AnalyticsPage /></Layout>
             </ProtectedRoute>
           } />
           <Route path="/teacher/*" element={
