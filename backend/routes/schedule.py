@@ -262,7 +262,7 @@ def recalculate_schedule():
     }), 200
 
 
-@schedule_bp.route('/:schedule_id', methods=['PUT'])
+@schedule_bp.route('/<int:schedule_id>', methods=['PUT'])
 @jwt_required()
 def update_schedule(schedule_id):
     """Обновить расписание"""

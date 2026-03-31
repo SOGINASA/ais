@@ -41,8 +41,7 @@ def get_teacher_classes():
     
     return jsonify({
         'success': True,
-        'data': [c.to_dict() for c in classes],
-        'all_classes': [c.to_dict() for c in all_classes],
+        'data': [c.to_dict() for c in all_classes],
     }), 200
 
 
@@ -147,13 +146,47 @@ def add_grade():
     data = request.get_json()
     
     # Валидация
-    if not data or not all(k in data for k in ['student_id', 'subject_id', 'score']):
-        return jsonify({'error': 'Missing required fields'}), 400
-    
-    student_id = data.get('student_id', type=int)
-    subject_id = data.get('subject_id', type=int)
-    score = data.get('score', type=int)
-    
+    if not data or not all(k in data for k in ['student_id', 'score']):
+        return jsonify({'error': 'Missing required fields: student_id, score'}), 400
+
+    if 'subject_id' not in data and 'subject' not in data:
+        return jsonify({'error': 'Missing required field: subject_id or subject'}), 400
+
+    try:
+        student_id = int(data.get('student_id'))
+        score = int(data.get('score'))
+    except (TypeError, ValueError):
+        return jsonify({'error': 'student_id and score must be integers'}), 400
+
+    # Resolve subject_id from name if not provided
+    if data.get('subject_id'):
+        try:
+            subject_id = int(data.get('subject_id'))
+        except (TypeError, ValueError):
+            return jsonify({'error': 'subject_id must be an integer'}), 400
+    else:
+        from models import Subject
+        subject_name = data.get('subject', '').strip()
+        # First try case-insensitive search
+        subject_obj = Subject.query.filter(
+            db.func.lower(Subject.name) == subject_name.lower()
+        ).first()
+        if not subject_obj:
+            # Create subject on-the-fly if it doesn't exist
+            subject_obj = Subject(name=subject_name)
+            db.session.add(subject_obj)
+            try:
+                db.session.flush()
+            except Exception:
+                db.session.rollback()
+                # Race condition: another request created it - fetch it
+                subject_obj = Subject.query.filter(
+                    db.func.lower(Subject.name) == subject_name.lower()
+                ).first()
+                if not subject_obj:
+                    return jsonify({'error': 'Failed to create subject'}), 500
+        subject_id = subject_obj.id
+
     if not 1 <= score <= 5:
         return jsonify({'error': 'Score must be between 1 and 5'}), 400
     

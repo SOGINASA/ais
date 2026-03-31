@@ -21,21 +21,26 @@ scheduler = None
 def _acquire_scheduler_lock():
     """Try to acquire the lock file. Returns file handle if successful, None otherwise."""
     try:
+        # Try to read existing PID first (without truncating)
+        if os.path.exists(_scheduler_lock_file):
+            try:
+                with open(_scheduler_lock_file, 'r') as f:
+                    pid_str = f.read().strip()
+                if pid_str:
+                    pid = int(pid_str)
+                    if pid != os.getpid():
+                        # Check if process is alive (cross-platform)
+                        try:
+                            os.kill(pid, 0)
+                            return None  # Another process holds the lock
+                        except (OSError, PermissionError):
+                            pass  # Process is dead, we can take over
+            except (ValueError, IOError, OSError):
+                pass
+
+        # Write our PID (now open in 'w' to create/overwrite)
         lock_file = open(_scheduler_lock_file, 'w')
-        try:
-            pid = lock_file.read().strip()
-            if pid:
-                try:
-                    os.kill(int(pid), 0)
-                    lock_file.close()
-                    return None
-                except (OSError, ProcessLookupError):
-                    pass
-        except (ValueError, IOError):
-            pass
-        lock_file.seek(0)
         lock_file.write(str(os.getpid()))
-        lock_file.truncate()
         lock_file.flush()
         return lock_file
     except (IOError, OSError):
@@ -139,20 +144,40 @@ class ScheduleGenerator:
         conflicts = []
         created_schedules = []
         
+        # Проверяем, что данные есть
+        if not classes or not teachers or not subjects:
+            conflicts.append("Missing required data: classes, teachers, or subjects")
+            return {
+                'success': False,
+                'schedules_created': 0,
+                'conflicts': conflicts,
+            }
+        
+        # Распределяем предметы по классам (чтобы каждый класс преподавал разные предметы)
+        subjects_per_class = len(subjects) // len(classes) if len(classes) > 0 else 1
+        if subjects_per_class < 1:
+            subjects_per_class = 1
+        
         # Greedy алгоритм: для каждого класса распределяем уроки
-        for cls in classes:
-            # Предметы для этого класса (примерно по 5-6 в день)
-            class_subjects = subjects[:len(subjects) // len(classes) + 1]
+        for cls_idx, cls in enumerate(classes):
+            # Предметы для этого класса (уникальные для каждого класса)
+            start_idx = (cls_idx * subjects_per_class) % len(subjects)
+            end_idx = start_idx + subjects_per_class
+            class_subjects = subjects[start_idx:end_idx] if end_idx <= len(subjects) else subjects[start_idx:]
+            
+            if not class_subjects:
+                class_subjects = subjects  # Fallback
             
             for day_of_week in range(self.DAYS_PER_WEEK):
                 for time_slot in range(self.LESSONS_PER_DAY):
                     if time_slot >= len(self.TIME_SLOTS):
                         break
                     
-                    # Выбираем предмет и учителя
-                    subject = class_subjects[time_slot % len(class_subjects)]
+                    # Выбираем предмет с ротацией по дням
+                    subject_idx = (day_of_week + time_slot) % len(class_subjects)
+                    subject = class_subjects[subject_idx]
                     
-                    # Находим доступного учителя
+                    # Находим доступного учителя для этого предмета
                     available_teacher = self._find_available_teacher(
                         teachers, teacher_schedule, day_of_week, time_slot
                     )

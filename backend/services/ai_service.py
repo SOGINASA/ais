@@ -183,14 +183,17 @@ Provide response in this JSON format:
             weaknesses.append("Declining performance trend")
         
         # По предметам
-        if analytics['by_subject']:
-            best_subject = max(analytics['by_subject'], key=lambda x: x['average'])
-            worst_subject = min(analytics['by_subject'], key=lambda x: x['average'])
-            
-            if best_subject['average'] >= 4.5:
-                strengths.append(f"Excellent in {best_subject['subject']}")
-            if worst_subject['average'] < 3.0:
-                weaknesses.append(f"Needs improvement in {worst_subject['subject']}")
+        if analytics['by_subject'] and len(analytics['by_subject']) > 0:
+            try:
+                best_subject = max(analytics['by_subject'], key=lambda x: x['average'])
+                worst_subject = min(analytics['by_subject'], key=lambda x: x['average'])
+                
+                if best_subject['average'] >= 4.5:
+                    strengths.append(f"Excellent in {best_subject['subject']}")
+                if worst_subject['average'] < 3.0:
+                    weaknesses.append(f"Needs improvement in {worst_subject['subject']}")
+            except (ValueError, TypeError):
+                pass  # Empty list edge case
         
         # По посещаемости
         attendance = analytics['attendance']

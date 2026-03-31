@@ -1,7 +1,6 @@
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime, timezone
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from models import db, Notification, NotificationPreference, PushSubscription
 from services.push_service import create_and_push_notification
 
@@ -113,11 +112,12 @@ def save_preferences():
     if 'pushEnabled' in data:
         prefs.push_enabled = data['pushEnabled']
     if 'timezone' in data:
-        try:
-            ZoneInfo(data['timezone'])
-            prefs.timezone = data['timezone']
-        except (ZoneInfoNotFoundError, KeyError):
-            pass
+        # Basic timezone validation
+        tz = data['timezone']
+        valid_timezones = ['UTC', 'Europe/Moscow', 'Asia/Almaty', 'America/New_York', 
+                          'America/Los_Angeles', 'Europe/London', 'Asia/Tokyo']
+        if tz in valid_timezones or tz.startswith('UTC'):
+            prefs.timezone = tz
 
     db.session.commit()
     return jsonify({'message': 'Preferences saved', 'preferences': prefs.to_dict()})

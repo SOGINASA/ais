@@ -142,17 +142,17 @@ def login():
 
         client_tz = data.get('timezone')
         if client_tz:
-            from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
-            try:
-                ZoneInfo(client_tz)
+            # Validate timezone string without using zoneinfo module
+            # Common valid timezones are stored in a simple list
+            valid_timezones = ['UTC', 'Europe/Moscow', 'Asia/Almaty', 'America/New_York', 
+                              'America/Los_Angeles', 'Europe/London', 'Asia/Tokyo']
+            if client_tz in valid_timezones or client_tz.startswith('UTC'):
                 prefs = NotificationPreference.query.filter_by(user_id=user.id).first()
                 if not prefs:
                     prefs = NotificationPreference(user_id=user.id, timezone=client_tz)
                     db.session.add(prefs)
                 elif prefs.timezone != client_tz:
                     prefs.timezone = client_tz
-            except (ZoneInfoNotFoundError, Exception):
-                pass
 
         db.session.commit()
 

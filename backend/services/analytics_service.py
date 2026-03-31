@@ -78,11 +78,11 @@ class StudentAnalytics:
         old_avg = StudentAnalytics._calc_avg(old_grades)
         recent_avg = StudentAnalytics._calc_avg(recent_grades)
         
-        if old_avg == 0:
+        if old_avg == 0 or (old_avg + recent_avg) == 0:
             return 0.0
         
-        # Процент изменения
-        change = ((recent_avg - old_avg) / old_avg) * 100
+        # Процент изменения (избегаем деления на 0)
+        change = ((recent_avg - old_avg) / abs(old_avg)) * 100
         return round(change, 2)
     
     @staticmethod
@@ -170,7 +170,8 @@ class StudentAnalytics:
             if half_len > 0:
                 old_avg = StudentAnalytics._calc_avg(subject_grades[:half_len])
                 recent_avg = StudentAnalytics._calc_avg(subject_grades[half_len:])
-                trend = ((recent_avg - old_avg) / old_avg * 100) if old_avg else 0
+                # Используем abs(old_avg) чтобы избежать деления на 0
+                trend = ((recent_avg - old_avg) / abs(old_avg) * 100) if old_avg else 0
             else:
                 trend = 0
             
@@ -227,6 +228,8 @@ class StudentAnalytics:
             result['absent_percentage'] = round(
                 ((result['absent'] + result['late']) / result['total']) * 100, 2
             )
+        else:
+            result['absent_percentage'] = 0.0
         
         return result
     

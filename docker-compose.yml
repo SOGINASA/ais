@@ -16,7 +16,7 @@ services:
       - DATABASE_URL=sqlite:////app/database/database.db
       - CORS_ORIGINS=http://frontend:3000,http://localhost:3000,http://localhost:3001,http://0.0.0.0:3000
     volumes:
-      - ./backend/database:/app/database
+      - db_data:/app/database
       - ./backend/logs:/app/logs
     restart: unless-stopped
     healthcheck:
@@ -54,3 +54,6 @@ services:
 networks:
   aqbobek_network:
     driver: bridge
+
+volumes:
+  db_data:

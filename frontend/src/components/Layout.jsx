@@ -15,7 +15,6 @@ const NAV = {
     { path: '/dashboard', label: 'Главная',      icon: Home },
     { path: '/classes',   label: 'Мои классы',  icon: Users },
     { path: '/analytics', label: 'Аналитика',   icon: Chart },
-    { path: '/schedule',  label: 'Расписание',  icon: Calendar },
   ],
   parent: [
     { path: '/dashboard',         label: 'Главная',     icon: Home },

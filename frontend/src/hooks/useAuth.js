@@ -1,17 +1,14 @@
-import { useEffect } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
 
 /**
- * Хук для проверки авторизации и восстановления сессии
- * @returns {Object} { user, isAuthenticated, role, loading }
+ * Хук для чтения состояния авторизации.
+ * restoreSession вызывается ОДИН РАЗ в App.js — не здесь.
  */
 export const useAuth = () => {
-  const { user, isAuthenticated, role, loading, restoreSession } = useAuthStore();
-
-  useEffect(() => {
-    // Восстановить сессию при загрузке приложения
-    restoreSession();
-  }, [restoreSession]);
+  const user            = useAuthStore((s) => s.user);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const role            = useAuthStore((s) => s.role);
+  const loading         = useAuthStore((s) => s.loading);
 
   return { user, isAuthenticated, role, loading };
 };

@@ -5,6 +5,7 @@ import {
 } from 'recharts';
 import { useStudentsStore } from '../../store/useStudentsStore';
 import { useGradesStore } from '../../store/useGradesStore';
+import { bilimClassClient } from '../../api/bilimclass/client';
 
 const TABS = [
   { id: 'performance', label: 'Успеваемость' },
@@ -15,48 +16,78 @@ const TABS = [
 const COLORS = ['#ef4444', '#f59e0b', '#f59e0b', '#3b82f6', '#10b981'];
 const PIE_COLORS = ['#10b981', '#ef4444'];
 
-const CLASS_ATTENDANCE = [
-  { class: '10A', present: 91, absent: 9 },
-  { class: '10B', present: 84, absent: 16 },
-];
+const ROLE_LABELS = {
+  student: 'Ученик',
+  teacher: 'Учитель',
+  parent: 'Родитель',
+  admin: 'Админ',
+};
 
 export default function ReportsPage() {
   const [tab, setTab] = useState('performance');
-  const { students, fetchStudents } = useStudentsStore();
-  const { grades, fetchGrades } = useGradesStore();
 
-  useEffect(() => { fetchStudents(); }, [fetchStudents]);
-  useEffect(() => { [1, 2, 3, 4].forEach(id => fetchGrades(id)); }, [fetchGrades]);
-
+  // Use stores for students and grades data
+  const students = useStudentsStore((state) => state.students) || [];
+  const grades = useGradesStore((state) => state.grades) || [];
   const safeStudents = Array.isArray(students) ? students : [];
-  const safeGrades   = Array.isArray(grades)   ? grades   : [];
+  const safeGrades = Array.isArray(grades) ? grades : [];
 
-  const schoolAvg = useMemo(() => {
-    if (!safeGrades.length) return '—';
-    return (safeGrades.reduce((s, g) => s + g.grade, 0) / safeGrades.length).toFixed(2);
-  }, [safeGrades]);
+  // Calculate school average
+  const schoolAvg = safeGrades.length > 0
+    ? (safeGrades.reduce((s, g) => s + (g.grade || 0), 0) / safeGrades.length).toFixed(2)
+    : '—';
+  const [users, setUsers]     = useState([]);
+  const [total, setTotal]     = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError]     = useState(null);
+  const [attendanceData, setAttendanceData] = useState(null);
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    bilimClassClient.get('/admin/users', { params: { per_page: 100 } })
+      .then((response) => {
+        console.log('Users API response:', response);
+        const list = response.users ?? [];
+        setUsers(Array.isArray(list) ? list : []);
+        setTotal(response.total ?? list.length);
+      })
+      .catch((err) => {
+        console.error('Failed to load users:', err);
+        setError(err.response?.data?.error || 'Не удалось загрузить пользователей');
+        setUsers([]);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Fetch attendance data when switching to attendance tab
+  useEffect(() => {
+    if (tab === 'attendance' && !attendanceData) {
+      setAttendanceLoading(true);
+      bilimClassClient.get('/admin/attendance')
+        .then((response) => {
+          setAttendanceData(response);
+        })
+        .catch(() => setAttendanceData(null))
+        .finally(() => setAttendanceLoading(false));
+    }
+  }, [tab, attendanceData]);
 
   const subjectStats = useMemo(() => {
     const map = {};
-    safeGrades.forEach(g => {
-      if (!map[g.subject]) map[g.subject] = { list: [], students: [] };
-      map[g.subject].list.push(g.grade);
-      if (!map[g.subject].students.includes(g.student_id)) map[g.subject].students.push(g.student_id);
+    users.forEach((u) => {
+      // user_type can be 'admin' or 'user'
+      // role can be 'student', 'teacher', 'parent', 'admin'
+      // Use role for actual classification, fallback to user_type for admins
+      let role = u.role;
+      if (!role || role === 'user') {
+        role = u.user_type === 'admin' ? 'admin' : 'student';
+      }
+      map[role] = (map[role] || 0) + 1;
     });
-    return Object.entries(map).map(([subj, { list, students: sids }]) => {
-      const avg = list.reduce((a, b) => a + b, 0) / list.length;
-      const best = safeStudents.find(s => {
-        const sg = safeGrades.filter(g => g.subject === subj && g.student_id === s.id);
-        if (!sg.length) return false;
-        const a = sg.reduce((x, g) => x + g.grade, 0) / sg.length;
-        return a === Math.max(...sids.map(id => {
-          const x = safeGrades.filter(g => g.subject === subj && g.student_id === id);
-          return x.length ? x.reduce((a, g) => a + g.grade, 0) / x.length : 0;
-        }));
-      });
-      return { subject: subj, avg: +avg.toFixed(2), best: best?.full_name || '—' };
-    });
-  }, [safeGrades, safeStudents]);
+    return map;
+  }, [users]);
 
   const classData = useMemo(() => {
     return ['10A', '10B'].map(cls => {
@@ -155,77 +186,144 @@ export default function ReportsPage() {
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-100 p-6">
-            <h2 className="text-sm font-semibold text-gray-700 mb-4">По предметам</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100">
-                    {['Предмет', 'Ср. балл', 'Лучший ученик'].map(h => (
-                      <th key={h} className="text-left py-2.5 px-3 text-gray-400 text-xs font-medium">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {subjectStats.map((s, i) => (
-                    <tr key={s.subject} className={`border-b border-gray-50 ${i % 2 === 1 ? 'bg-gray-50/40' : ''}`}>
-                      <td className="py-3 px-3 font-medium text-gray-800">{s.subject}</td>
-                      <td className="py-3 px-3">
-                        <span className={`font-bold text-sm ${
-                          s.avg >= 4.5 ? 'text-emerald-600' :
-                          s.avg >= 3.5 ? 'text-blue-600' :
-                          s.avg >= 2.5 ? 'text-amber-600' : 'text-red-600'
-                        }`}>{s.avg}</span>
-                      </td>
-                      <td className="py-3 px-3 text-gray-500">{s.best}</td>
+            <h2 className="text-sm font-semibold text-gray-700 mb-4">Последние зарегистрированные</h2>
+            {loading ? (
+              <p className="text-gray-400 text-sm text-center py-8">Загрузка...</p>
+            ) : error ? (
+              <div className="text-center py-8">
+                <p className="text-red-500 text-sm mb-2">{error}</p>
+                <p className="text-gray-400 text-xs">Проверьте консоль браузера для деталей</p>
+              </div>
+            ) : users.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-400 text-sm">Пользователи не найдены</p>
+                <p className="text-gray-300 text-xs mt-1">В системе пока нет зарегистрированных пользователей</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-100">
+                      <th className="text-left py-2.5 px-3 text-gray-400 font-medium text-xs">Пользователь</th>
+                      <th className="text-left py-2.5 px-3 text-gray-400 font-medium text-xs">Email</th>
+                      <th className="text-center py-2.5 px-3 text-gray-400 font-medium text-xs">Роль</th>
+                      <th className="text-left py-2.5 px-3 text-gray-400 font-medium text-xs">Зарегистрирован</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {users.map((u, i) => {
+                      let role = u.role;
+                      if (!role || role === 'user') {
+                        role = u.user_type === 'admin' ? 'admin' : 'student';
+                      }
+                      return (
+                        <tr key={u.id} className={`border-b border-gray-50 ${i % 2 === 1 ? 'bg-gray-50/40' : ''}`}>
+                          <td className="py-3 px-3">
+                            <div className="flex items-center gap-2">
+                              <img
+                                src={u.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.id}`}
+                                alt=""
+                                className="w-7 h-7 rounded-full bg-gray-100"
+                              />
+                              <span className="font-medium text-gray-800">{u.full_name}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-3 text-gray-400 text-xs">{u.email}</td>
+                          <td className="py-3 px-3 text-center">
+                            <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">
+                              {ROLE_LABELS[role] ? ROLE_LABELS[role].slice(0, -2) : role}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3 text-gray-400 text-xs">
+                            {u.created_at ? new Date(u.created_at).toLocaleDateString('ru-RU') : '—'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       )}
 
       {/* Attendance */}
       {tab === 'attendance' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-2xl border border-gray-100 p-6">
-            <h2 className="text-sm font-semibold text-gray-700 mb-1">Общая посещаемость</h2>
-            <p className="text-4xl font-extrabold text-gray-900 mb-4">87%</p>
-            <ResponsiveContainer width="100%" height={200}>
-              <PieChart>
-                <Pie
-                  data={[{ name: 'Присутствовал', value: 87 }, { name: 'Отсутствовал', value: 13 }]}
-                  cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={3} dataKey="value"
-                >
-                  {PIE_COLORS.map((c, i) => <Cell key={i} fill={c} />)}
-                </Pie>
-                <Tooltip formatter={v => `${v}%`} />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-gray-100 p-6">
-            <h2 className="text-sm font-semibold text-gray-700 mb-4">По классам</h2>
-            <div className="space-y-4">
-              {CLASS_ATTENDANCE.map(c => (
-                <div key={c.class}>
-                  <div className="flex justify-between items-center mb-1.5">
-                    <span className="text-sm font-medium text-gray-700">{c.class}</span>
-                    <span className="text-sm font-bold text-gray-900">{c.present}%</span>
+        <div>
+          {attendanceLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : attendanceData ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="bg-white rounded-2xl border border-gray-100 p-6">
+                <h2 className="text-sm font-semibold text-gray-700 mb-1">Средняя посещаемость</h2>
+                <p className="text-4xl font-extrabold text-gray-900 mb-4">{attendanceData.overall.present_rate}%</p>
+                <ResponsiveContainer width="100%" height={200}>
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: 'Присутствовал', value: attendanceData.overall.present },
+                        { name: 'Отсутствовал', value: attendanceData.overall.absent + attendanceData.overall.late }
+                      ]}
+                      cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={3} dataKey="value"
+                    >
+                      {PIE_COLORS.map((c, i) => <Cell key={i} fill={c} />)}
+                    </Pie>
+                    <Tooltip formatter={(v) => `${v} записей`} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+                  <div className="bg-emerald-50 rounded-lg p-2">
+                    <p className="text-lg font-bold text-emerald-600">{attendanceData.overall.present}</p>
+                    <p className="text-xs text-gray-500">Присутствовали</p>
                   </div>
-                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${c.present}%` }} />
+                  <div className="bg-red-50 rounded-lg p-2">
+                    <p className="text-lg font-bold text-red-600">{attendanceData.overall.absent}</p>
+                    <p className="text-xs text-gray-500">Отсутствовали</p>
                   </div>
-                  <div className="flex justify-between mt-1">
-                    <span className="text-xs text-emerald-600">✓ {c.present}% присутствует</span>
-                    <span className="text-xs text-red-500">{c.absent}% пропускает</span>
+                  <div className="bg-amber-50 rounded-lg p-2">
+                    <p className="text-lg font-bold text-amber-600">{attendanceData.overall.late}</p>
+                    <p className="text-xs text-gray-500">Опоздали</p>
                   </div>
                 </div>
-              ))}
+              </div>
+
+              <div className="bg-white rounded-2xl border border-gray-100 p-6">
+                <h2 className="text-sm font-semibold text-gray-700 mb-4">По классам</h2>
+                {attendanceData.by_class && attendanceData.by_class.length > 0 ? (
+                  <div className="space-y-4">
+                    {attendanceData.by_class.map((c) => (
+                      <div key={c.class_name}>
+                        <div className="flex justify-between items-center mb-1.5">
+                          <span className="text-sm font-medium text-gray-700">{c.class_name}</span>
+                          <span className="text-sm font-bold text-gray-900">{c.present_rate}%</span>
+                        </div>
+                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-emerald-500 rounded-full" 
+                            style={{ width: `${c.present_rate}%` }} 
+                          />
+                        </div>
+                        <div className="flex justify-between mt-1">
+                          <span className="text-xs text-emerald-600">{c.present_rate}% присутствует</span>
+                          <span className="text-xs text-gray-400">{c.students} учеников</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-400 text-sm text-center py-8">Нет данных о посещаемости</p>
+                )}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-white rounded-2xl border border-gray-100 p-6">
+              <p className="text-gray-400 text-sm text-center py-8">Не удалось загрузить данные о посещаемости</p>
+            </div>
+          )}
         </div>
       )}
 

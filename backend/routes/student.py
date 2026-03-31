@@ -11,7 +11,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import db, User, Grade, Schedule, Achievement, Attendance, ClassModel
 from services.analytics_service import StudentAnalytics
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 student_bp = Blueprint('student', __name__)
 
@@ -32,7 +32,7 @@ def get_student_grades():
         query = query.filter_by(subject_id=subject_id)
     
     if weeks:
-        cutoff_date = datetime.now(timezone.utc) - __import__('datetime').timedelta(weeks=weeks)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(weeks=weeks)
         query = query.filter(Grade.date >= cutoff_date.date())
     
     # Сортируем по дате (новые сверху)
@@ -68,9 +68,19 @@ def get_quarter_grades():
         q = grade.quarter or 1
         by_subject[subject][f'q{q}'] = grade.score
     
+    result = []
+    for subject_name, quarters in by_subject.items():
+        for q_key, score in quarters.items():
+            q_num = int(q_key[1:]) if q_key.startswith('q') else 1
+            result.append({
+                'subject': subject_name,
+                'quarter': q_num,
+                'score': score,
+            })
+
     return jsonify({
         'success': True,
-        'data': list(by_subject.items()),
+        'data': result,
     }), 200
 
 

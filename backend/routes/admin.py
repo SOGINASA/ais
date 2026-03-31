@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import db, User, Feedback, AuditLog
+from models import db, User, Feedback, AuditLog, Attendance, ClassModel
 from functools import wraps
 
 admin_bp = Blueprint('admin', __name__)
@@ -150,3 +150,75 @@ def get_stats():
             'unread': unread_feedback,
         },
     })
+
+
+@admin_bp.route('/attendance', methods=['GET'])
+@admin_required
+def get_attendance_stats():
+    """Get attendance statistics for all classes"""
+    try:
+        from datetime import datetime, timedelta
+        thirty_days_ago = datetime.now() - timedelta(days=30)
+        
+        # Overall stats
+        all_records = Attendance.query.filter(
+            Attendance.date >= thirty_days_ago.date()
+        ).all()
+        
+        total = len(all_records)
+        present = sum(1 for r in all_records if r.status == 'present')
+        absent = sum(1 for r in all_records if r.status == 'absent')
+        late = sum(1 for r in all_records if r.status == 'late')
+        excused = sum(1 for r in all_records if r.status == 'excused')
+        
+        present_rate = round((present / total * 100), 1) if total > 0 else 0
+        
+        # Per-class stats
+        students = User.query.filter_by(role='student').all()
+        classes_data = []
+        
+        for student in students:
+            if not student.class_name:
+                continue
+            
+            student_records = [r for r in all_records if r.student_id == student.id]
+            student_total = len(student_records)
+            student_present = sum(1 for r in student_records if r.status == 'present')
+            student_rate = round((student_present / student_total * 100), 1) if student_total > 0 else 0
+            
+            # Find or create class entry
+            existing = next((c for c in classes_data if c['class_name'] == student.class_name), None)
+            if existing:
+                existing['students'] += 1
+                existing['present_total'] += student_present
+                existing['total'] += student_total
+            else:
+                classes_data.append({
+                    'class_name': student.class_name,
+                    'students': 1,
+                    'present_total': student_present,
+                    'total': student_total,
+                    'present_rate': student_rate,
+                })
+        
+        # Calculate class rates
+        for cls in classes_data:
+            cls['present_rate'] = round((cls['present_total'] / cls['total'] * 100), 1) if cls['total'] > 0 else 0
+        
+        # Sort by class name
+        classes_data.sort(key=lambda x: x['class_name'])
+        
+        return jsonify({
+            'overall': {
+                'total': total,
+                'present': present,
+                'absent': absent,
+                'late': late,
+                'excused': excused,
+                'present_rate': present_rate,
+            },
+            'by_class': classes_data,
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e), 'overall': {'total': 0, 'present': 0, 'absent': 0, 'late': 0, 'excused': 0, 'present_rate': 0}, 'by_class': []}), 200

@@ -182,7 +182,7 @@ docker-compose -f docker-compose.prod.yml up -d
 
 ---
 
-## 🧟 Demo Data
+## ⚙️ Demo Data
 
 Auto-seeded on first run:
 - **9 Classes**: 3A, 3B, 3C for grades 9, 10, 11
