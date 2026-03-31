@@ -8,7 +8,7 @@ try {
   const raw = localStorage.getItem('user');
   if (raw) {
     storedUser = JSON.parse(raw);
-    // Validate user has a role
+    // Validate user has a roleф
     const role = storedUser?.user_type || storedUser?.role;
     if (!role || !['admin', 'teacher', 'student', 'parent'].includes(role)) {
       storedUser = null;
