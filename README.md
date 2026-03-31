@@ -412,17 +412,9 @@ make lint                  # flake8
 
 | Документ | Содержание |
 |----------|-----------|
-| [QUICKSTART.md](QUICKSTART.md) | Запуск за 5 минут |
-| [DOCKER-COMPOSE.md](DOCKER-COMPOSE.md) | Docker: настройка, команды, troubleshooting |
-| [MAKEFILE.md](MAKEFILE.md) | Справочник по Make-командам |
 | [backend/BACKEND_SETUP.md](backend/BACKEND_SETUP.md) | Настройка Flask, база данных, сервисы |
 | [backend/API_DOCUMENTATION.md](backend/API_DOCUMENTATION.md) | Полная документация всех эндпоинтов |
 | [backend/README.md](backend/README.md) | Структура бэкенда, модели, конфигурация |
-| [frontend/ARCHITECTURE.md](frontend/ARCHITECTURE.md) | Архитектура фронтенда, структура компонентов |
-| [frontend/README.md](frontend/README.md) | Запуск фронтенда, stores, mock-данные
-| [frontend/ARCHITECTURE.md](frontend/ARCHITECTURE.md) | Архитектура фронтенда, структура компонентов |
-| [frontend/README.md](frontend/README.md) | Запуск фронтенда, stores, mock-данные |
-
 
 
 Made by ITshechka team.
