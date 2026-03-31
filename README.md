@@ -1,438 +1,420 @@
-# 🏫 Aqbobek Lyceum - School Management System
+# Aqbobek Lyceum — School Management System
 
-A comprehensive educational management platform built with **Flask** (backend) and **React** (frontend), featuring student analytics, AI-powered insights, schedule generation, and real-time notifications.
-
-**Status**: ✅ Production-ready MVP  
-**Docker**: Fully containerized with development & production profiles  
-**License**: MIT
+Платформа управления школой. Backend на Flask, frontend на React, всё в Docker. Четыре роли: ученик, учитель, родитель, администратор. Встроен AI-модуль на базе Groq API для анализа успеваемости.
 
 ---
 
-## 🎯 Quick Start (Docker Recommended)
+## Содержание
+
+- [Быстрый старт](#быстрый-старт)
+- [Стек](#стек)
+- [Архитектура](#архитектура)
+- [База данных](#база-данных)
+- [API](#api)
+- [Функциональность](#функциональность)
+- [AI-модуль](#ai-модуль)
+- [Конфигурация](#конфигурация)
+- [Режимы запуска](#режимы-запуска)
+- [Запуск без Docker](#запуск-без-docker)
+- [Структура проекта](#структура-проекта)
+- [Тестовые аккаунты](#тестовые-аккаунты)
+- [Полезные команды](#полезные-команды)
+- [Проверка работоспособности](#проверка-работоспособности)
+- [Решение проблем](#решение-проблем)
+- [Безопасность](#безопасность)
+- [Документация](#документация)
+
+---
+
+## Быстрый старт
+
+Требования: Docker и Docker Compose 2.0+, свободные порты 3000 и 5000.
 
 ```bash
-# 1. Navigate to backend
-cd backend
-
-# 2. Configure environment
+git clone <repo-url>
+cd ais/backend
 cp .env.example .env
-
-# 3. Start everything (one command!)
+cd ..
 docker-compose up --build
-
-# 4. Open in browser
-open http://localhost:3000
 ```
 
-**Duration**: ~5 minutes (includes build time on first run)
+После запуска:
+- Frontend: `http://localhost:3000`
+- Backend: `http://localhost:5000`
 
-👉 See [QUICKSTART.md](./QUICKSTART.md) for alternatives and detailed setup.
+Заполнение демо-данными:
 
----
-
-## 📚 Documentation
-
-| Document | Purpose |
-|----------|---------|
-| [QUICKSTART.md](./QUICKSTART.md) | Get running in 5 minutes |
-| [DOCKER-COMPOSE.md](./DOCKER-COMPOSE.md) | Docker setup, commands, troubleshooting |
-| [backend/BACKEND_SETUP.md](./backend/BACKEND_SETUP.md) | Flask setup, database, API reference |
-| [backend/API_DOCUMENTATION.md](./backend/API_DOCUMENTATION.md) | Complete API endpoint reference |
-| [frontend/ARCHITECTURE.md](./frontend/ARCHITECTURE.md) | Frontend component structure |
-
----
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Aqbobek Lyceum                            │
-├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│  ┌──────────────────────┐          ┌────────────────────┐  │
-│  │   Frontend (React)   │          │  Backend (Flask)   │  │
-│  │  ├─ Student Pages    │◄─────────┤  ├─ User Auth      │  │
-│  │  ├─ Teacher Pages    │          │  ├─ Analytics      │  │
-│  │  ├─ Admin Pages      │          │  ├─ AI Analysis    │  │
-│  │  └─ Real-time Notify │          │  ├─ Scheduling     │  │
-│  │                      │          │  └─ WebSocket      │  │
-│  │   Port: 3000         │          │   Port: 5000       │  │
-│  └──────────────────────┘          └────┬───────────────┘  │
-│                                          │                   │
-│                                    ┌─────▼──────────┐       │
-│                                    │  SQLite / PG   │       │
-│                                    │   Database     │       │
-│                                    └────────────────┘       │
-│                                                               │
-└─────────────────────────────────────────────────────────────┘
+```bash
+docker-compose exec backend python seed.py
 ```
 
----
-
-## ⚙️ Tech Stack
-
-### Backend
-- **Framework**: Flask 3.1 + Gunicorn
-- **Database**: SQLite (dev) / PostgreSQL (prod)
-- **Authentication**: JWT with role-based access control
-- **Real-time**: WebSocket (Flask-Sock)
-- **AI**: Groq API (mixtral-8x7b) with intelligent mock fallback
-- **Scheduling**: APScheduler + custom algorithm
-- **ORM**: SQLAlchemy 2.0
-
-### Frontend
-- **Framework**: React 18
-- **State**: Zustand stores
-- **HTTP**: Axios + custom hooks
-- **Styling**: Tailwind CSS
-- **UI**: Responsive, dark mode support
-
-### DevOps
-- **Containerization**: Docker + Docker Compose
-- **CI/CD**: GitHub Actions
-- **Multiple profiles**: Development, Production, Testing
+Создаст 72+ учеников, 5 учителей, предметы, классы, 1600+ оценок, расписание, достижения, посещаемость.
 
 ---
 
-## 🎓 Features
+## Стек
 
-### For Students
-- 📊 **Dashboard**: Grades, schedule, achievements
-- 📈 **Analytics**: Performance trends, risk detection
-- 🏆 **Leaderboard**: Class rankings with points
-- 🎁 **Portfolio**: Achievements and certificates
-- 📅 **Schedule**: Personal timetable, conflict-free
-- 🔔 **Notifications**: Real-time updates via WebSocket
-
-### For Teachers
-- 👥 **Class Management**: View students, grades, attendance
-- 📝 **Grading**: Assign grades by subject, quarter
-- 🎯 **Risk Detection**: Identify struggling students automatically
-- 📊 **Analytics**: Class-wide performance metrics
-- 🤖 **AI Reports**: Groq-powered analysis of student performance
-- 📅 **Schedule**: Manage teaching assignments
-
-### For Admins
-- 🏫 **User Management**: Create/manage users by role
-- 📝 **Schedule Generation**: Conflict-free timetables in seconds
-- ⚙️ **System Config**: Application settings and policies
-- 📊 **Reports**: System-wide analytics and insights
-- 🔐 **Security**: Role-based access control, API rate limiting
+| Слой | Технологии |
+|------|-----------|
+| Backend | Flask 3.1, SQLAlchemy 2.0, Flask-JWT-Extended, Flask-Sock, APScheduler, Gunicorn |
+| Frontend | React 18, Zustand, Axios, Tailwind CSS, Recharts, MSW |
+| База данных | SQLite (dev) / PostgreSQL (prod) |
+| AI | Groq API (mixtral-8x7b) с fallback на mock |
+| Инфраструктура | Docker, Docker Compose, GitHub Actions |
 
 ---
 
-## 📦 API Overview
+## Архитектура
 
-**35+ RESTful endpoints** across 6 modules:
-
-| Module | Endpoints | Purpose |
-|--------|-----------|---------|
-| **Auth** | 4 | Login, logout, token refresh, health check |
-| **Student** | 8 | Grades, schedule, leaderboard, portfolio, analytics |
-| **Teacher** | 7 | Class management, grading, risk detection, reports |
-| **AI** | 4 | Student/class analysis, predictions, subject deep-dive |
-| **Schedule** | 6 | View/generate/manage timetables |
-| **Admin** | 6 | Base functionality (role-based restrictions) |
-
-👉 [Full API Reference](./backend/API_DOCUMENTATION.md)
-
----
-
-## 🗄️ Database Schema
-
-**9 Models**:
-- `User` (student, teacher, parent, admin)
-- `Subject` (courses offered)
-- `Grade` (weighted scores with quarters)
-- `ClassModel` (school classes 9A, 9B, etc)
-- `Schedule` (timetable entries)
-- `Achievement` (points-based badges)
-- `Attendance` (daily records)
-- `AnalyticsSnapshot` (cached metrics)
-- `Notification` (real-time events)
-
-**Relationships**: 30+ foreign keys with cascade deletes
-
-👉 [Schema Details](./backend/models.py)
+```
+             +---------------------+---------------------+
+             |                     |                     |
+   +---------v---------+ +--------v--------+ +----------v----------+
+   |  Frontend :3000   | |  Backend :5000  | |   WebSocket /ws    |
+   |  React + Tailwind | |  Flask REST API | |   Notifications    |
+   +-------------------+ +--------+--------+ +---------------------+
+                                  |
+                   +--------------+--------------+
+                   |              |              |
+             +-----v-----+ +-----v-----+ +-----v-----+
+             | SQLalchemy| |  Groq AI | | Scheduler |
+             |  Postgres | |  API      | | APScheduler|
+             +-----------+ +-----------+ +-----------+
+```
 
 ---
 
-## 🚀 Deployment
+## База данных
 
-### Local Development
+9 моделей, 30+ внешних ключей с каскадным удалением.
+
+| Модель | Назначение |
+|--------|-----------|
+| `User` | Пользователи (student, teacher, parent, admin) |
+| `Subject` | Учебные предметы |
+| `ClassModel` | Классы (9A, 9B, 10A и т.д.) |
+| `Grade` | Оценки (1-5, вес, четверть) |
+| `Schedule` | Расписание (день, время, кабинет, тип урока) |
+| `Achievement` | Достижения и баллы |
+| `Attendance` | Посещаемость (present, absent, late, excuse) |
+| `AnalyticsSnapshot` | Кэшированные метрики |
+| `Notification` | Уведомления в реальном времени |
+
+Подробности в [backend/models.py](backend/models.py).
+
+---
+
+## API
+
+35+ REST-эндпоинтов по 8 модулям:
+
+| Модуль | Префикс | Что делает |
+|--------|---------|-----------|
+| Auth | `/api/auth` | Регистрация, вход, JWT refresh, OAuth (Google, GitHub, Telegram), WebAuthn |
+| Student | `/api/student` | Оценки, четвертные оценки, лидерборд, портфолио, расписание, посещаемость, аналитика |
+| Teacher | `/api/teacher` | Классы, студенты, выставление оценок, отметка посещаемости, детекция риска, AI-отчёты |
+| AI | `/api/ai` | Отчёт по студенту, отчёт по классу, предсказания, анализ по предмету |
+| Schedule | `/api/schedule` | Расписание класса/учителя/студента, генерация, проверка конфликтов |
+| Admin | `/api/admin` | Управление пользователями, статистика, аудит-логи |
+| Notifications | `/api/notifications` | CRUD уведомлений, Web Push подписки, настройки |
+| Feedback | `/api/feedback` | Обратная связь |
+
+Полная документация: [backend/API_DOCUMENTATION.md](backend/API_DOCUMENTATION.md).
+
+---
+
+## Функциональность
+
+### Ученик
+
+- Дашборд с оценками, расписанием, достижениями
+- Аналитика: тренды успеваемости, детекция рисков
+- Лидерборд класса с очками
+- Портфолио достижений и сертификатов
+- Персональное расписание
+- Уведомления в реальном времени через WebSocket
+
+### Учитель
+
+- Управление классами и студентами
+- Выставление оценок по предмету и четверти
+- Автоматическое выявление отстающих учеников (risk detection)
+- AI-отчёты по каждому студенту через Groq API
+- Аналитика по классу
+
+### Родитель
+
+- Просмотр успеваемости ребёнка
+- Посещаемость по предметам
+- AI-выжимка за неделю
+
+### Администратор
+
+- Управление пользователями, предметами, классами
+- Генерация расписания (backtracking CSP-solver, без конфликтов)
+- Сводные метрики школы
+- Аудит-логи
+
+---
+
+## AI-модуль
+
+Модуль на базе Groq API (mixtral-8x7b-32768). Анализирует успеваемость, выявляет зоны риска, даёт рекомендации.
+
+Логика работы:
+
+1. Вычисляются 7 метрик студента (средний балл, тренд, риск, посещаемость, предметы, достижения)
+2. Метрики отправляются в Groq API (или используется mock если ключ не указан)
+3. Ответ LLM парсится в структурированный формат
+4. Возвращается `{summary, strengths[], weaknesses[], recommendations[]}`
+
+Если `GROQ_API_KEY` не указан, система автоматически переключается на mock-режим — генерирует ответы на основе реальных метрик студента без обращения к внешнему API.
+
+Реализация: [backend/services/ai_service.py](backend/services/ai_service.py).
+
+---
+
+## Конфигурация
+
+Файл `backend/.env`:
+
+| Переменная | Описание | Обязательно |
+|-----------|----------|------------|
+| `SECRET_KEY` | Flask secret key | Для production |
+| `JWT_SECRET_KEY` | Подпись JWT токенов | Для production |
+| `DATABASE_URL` | URL базы данных (SQLite или PostgreSQL) | Нет, есть default |
+| `GROQ_API_KEY` | Ключ Groq API для AI-анализа | Нет, работает mock |
+| `CORS_ORIGINS` | Допустимые origins через запятую | Нет |
+| `FRONTEND_URL` | URL фронтенда (для OAuth) | Для OAuth |
+| `GOOGLE_CLIENT_ID` | Google OAuth | Для OAuth Google |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth | Для OAuth Google |
+| `GITHUB_CLIENT_ID` | GitHub OAuth | Для OAuth GitHub |
+| `GITHUB_CLIENT_SECRET` | GitHub OAuth | Для OAuth GitHub |
+| `TELEGRAM_BOT_TOKEN` | Токен Telegram бота | Для Telegram Login |
+| `VAPID_PRIVATE_KEY` | VAPID приватный ключ | Для Web Push |
+| `VAPID_PUBLIC_KEY` | VAPID публичный ключ | Для Web Push |
+
+Сгенерировать VAPID ключи:
+
+```bash
+flask generate-vapid
+```
+
+---
+
+## Режимы запуска
+
+### Стандартный
+
+```bash
+docker-compose up --build
+```
+
+### Development (с hot reload)
+
 ```bash
 docker-compose -f docker-compose.dev.yml up
-# Hot reload enabled for both backend & frontend
 ```
 
-### Production (with PostgreSQL)
+Изменения в коде бэкенда и фронтенда подхватываются автоматически.
+
+### Production (с PostgreSQL)
+
 ```bash
-cd backend
 docker-compose -f docker-compose.prod.yml up -d
-# Uses environment variables, health checks, logging
 ```
 
-### Cloud Deployment
-1. Build and push images to Docker Hub/GCR
-2. Deploy with Kubernetes or Docker Swarm
-3. Use environment variables for secrets (never commit .env)
-4. Configure PostgreSQL, Redis for scaling
+### Через Makefile
 
-👉 [Docker Guide](./DOCKER-COMPOSE.md#production-deployment)
-
----
-
-## ⚙️ Demo Data
-
-Auto-seeded on first run:
-- **9 Classes**: 3A, 3B, 3C for grades 9, 10, 11
-- **72+ Students**: With realistic grades and achievements
-- **5 Teachers**: With assigned classes and schedules
-- **1600+ Grades**: Distribution across subjects and quarters
-- **2160+ Attendance Records**: Complete month-long history
-- **100+ Achievements**: Points-based badges
-
-**Test Accounts**:
-```
-Admin:    admin@school.com / admin123
-Teacher:  teacher1@school.com / teacher123
-Student:  student1@school.com / student123
-```
-
-👉 [Seed Data Guide](./backend/BACKEND_SETUP.md#seeding-demo-data)
-
----
-
-## 🤖 AI Integration
-
-### Groq API (Production)
-- **Model**: mixtral-8x7b-32768 (free tier, 5K RPM)
-- **Features**: Student analysis, class reports, predictions
-- **Integration**: Automatic fallback to intelligent mock if API unavailable
-
-### Mock Mode (Development)
-- Simulates Groq responses based on actual student metrics
-- Allows testing without API calls or keys
-- Perfect for frontend development
-
-**Smart Integration**:
-```
-1. Calculate 7 metrics (average score, trend, risk, etc)
-2. Send metrics to Groq API (or use mock if unavailable)
-3. Parse LLM response into structured format
-4. Return {summary, strengths[], weaknesses[], recommendations[]}
+```bash
+make build       # Собрать образы
+make up          # Запустить
+make down        # Остановить
+make restart     # Перезапустить
+make dev         # Development с hot reload
+make prod        # Production
+make rebuild     # down + build + up
+make clean       # Удалить контейнеры, volumes, images
 ```
 
 ---
 
-## 🔄 Real-time Features
-
-### WebSocket Notifications
-- Student grade updates
-- Schedule changes
-- Achievement unlocks
-- Teacher assignments
-- Admin alerts
-
-**Example**:
-```javascript
-// Frontend auto-subscribes
-useNotifications((notification) => {
-  // Handle real-time update
-})
-
-// Backend sends
-send_notification({
-  user_id: "student1",
-  type: "grade",
-  message: "New grade posted in Math"
-})
-```
-
----
-
-## 📊 Analytics Engine
-
-### Student Metrics
-- **Average Score**: Weighted by assessment type
-- **Trend**: % change over 2-week periods
-- **Risk Level**: 0-100 scale (Normal/Warning/Critical)
-- **By Subject**: Deep dive into individual courses
-- **Attendance**: Percentage and status tracking
-- **Achievements**: Points and badges earned
-- **Timestamp**: When metrics were calculated
-
-### Class Metrics
-- **Class Average**: Aggregated from students
-- **Top Performers**: Students above 3.5 GPA
-- **At Risk**: Students below 2.0 GPA
-- **Attendance Rate**: Class-wide average
-- **Engagement**: Achievement distribution
-
----
-
-## 🔐 Security
-
-### Authentication
-- JWT with 15-minute expiration
-- Refresh tokens for session continuation
-- Role-based access control (RBAC)
-- Secure password hashing (Werkzeug)
-
-### Authorization
-- Role checks on all protected endpoints
-- Resource ownership validation (teacher can only view own classes)
-- Rate limiting on public endpoints
-- CORS configuration per environment
-
-### Data Protection
-- Secrets stored in `.env` (never in git)
-- Database encryption support
-- HTTPS/TLS in production
-- Input validation on all endpoints
-
----
-
-## 🧪 Testing
+## Запуск без Docker
 
 ### Backend
+
 ```bash
-# Run all tests
-docker-compose exec backend pytest
-
-# With coverage
-pytest --cov=.
-
-# Specific module
-pytest tests/test_analytics.py
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+python -c "from app import create_app; app = create_app(); app.app_context().push()"
+python seed.py
+python app.py
 ```
+
+Сервер: `http://localhost:5000`
 
 ### Frontend
-```bash
-docker-compose exec frontend npm test
 
-# With coverage
-npm test -- --coverage
+```bash
+cd frontend
+npm install
+npm start
+```
+
+Приложение: `http://localhost:3000`
+
+MSW (Mock Service Worker) настроен и автоматически перехватывает API-запросы в development-режиме.
+
+---
+
+## Структура проекта
+
+```
+ais/
+├── backend/
+│   ├── app.py                    # App factory, WebSocket, CLI
+│   ├── config.py                 # Конфигурация (dev/test/prod)
+│   ├── models.py                 # SQLAlchemy модели
+│   ├── seed.py                   # Генерация демо-данных
+│   ├── routes/
+│   │   ├── auth.py               # Регистрация, вход
+│   │   ├── oauth.py              # Google, GitHub, Telegram
+│   │   ├── webauthn.py           # Биометрия
+│   │   ├── student.py            # API ученика
+│   │   ├── teacher.py            # API учителя
+│   │   ├── admin.py              # API администратора
+│   │   ├── ai.py                 # AI-аналитика
+│   │   ├── schedule.py           # Расписание
+│   │   ├── notifications.py      # Уведомления
+│   │   └── feedback.py           # Обратная связь
+│   └── services/
+│       ├── ai_service.py         # Groq API + mock fallback
+│       ├── analytics_service.py  # Метрики и аналитика студентов
+│       ├── oauth_service.py      # OAuth провайдеры
+│       ├── websocket_service.py  # WebSocket реестр
+│       ├── push_service.py       # Web Push
+│       └── scheduler_service.py  # APScheduler
+│
+├── frontend/
+│   └── src/
+│       ├── api/                  # HTTP-клиенты, mock-данные
+│       ├── store/                # Zustand stores
+│       ├── hooks/                # Custom React hooks
+│       ├── components/           # UI-компоненты
+│       ├── pages/                # Страницы по ролям
+│       ├── utils/                # Алгоритмы, хелперы
+│       └── constants/            # Роли, предметы, пороги
+│
+├── docker-compose.yml            # Стандартный запуск
+├── docker-compose.dev.yml        # Development с hot reload
+├── docker-compose.prod.yml       # Production с PostgreSQL
+├── Makefile                      # Команды управления
+└── README.md
 ```
 
 ---
 
-## 📈 Performance
+## Тестовые аккаунты
 
-### Backend Optimization
-- **Caching**: Analytics calculated once per hour
-- **Indexing**: Database indexes on frequently queried fields
-- **Gunicorn**: 4 workers, 10 threads each (configurable)
-- **Connection Pool**: SQLAlchemy connection pooling
+После запуска `seed.py` доступны два набора аккаунтов.
 
-### Frontend Optimization
-- **Code Splitting**: Route-based lazy loading
-- **Minification**: Production build minifies all files
-- **Image Optimization**: Serve optimized images
-- **Caching**: Service workers cache static assets
+Основные:
 
-### Database
-- **Query Optimization**: Selective field loading
-- **Batch Operations**: Insert multiple records at once
-- **Connection Reuse**: SQLAlchemy pooling
-- **Indexing**: Primary keys + composite indexes
+| Роль | Email | Пароль |
+|------|-------|--------|
+| Администратор | `admin@school.com` | `admin123` |
+| Учитель | `teacher1@school.com` | `teacher123` |
+| Ученик | `student1@school.com` | `student123` |
+
+Демо-аккаунты (страница входа):
+
+| Роль | Email | Пароль |
+|------|-------|--------|
+| Администратор | `admin@school.kz` | `password` |
+| Учитель | `daria@school.kz` | `password` |
+| Ученик | `ayman@school.kz` | `password` |
+| Родитель | `zhanna.smagulova@example.kz` | `password` |
 
 ---
 
-## 🛠️ Development
+## Полезные команды
 
-### Prerequisites
-- Docker & Docker Compose 2.0+
-- Python 3.11+ (if running without Docker)
-- Node 18+ (if running without Docker)
-
-### Setup
 ```bash
-# Clone and navigate
-cd backend
+# Логи
+make logs                  # Все сервисы
+make logs-backend          # Только бэкенд
+make logs-frontend         # Только фронтенд
 
-# Create environment file
-cp .env.example .env
+# Статус
+make ps                    # Список контейнеров
+make health                # Проверка здоровья сервисов
 
-# Start development environment
-docker-compose -f docker-compose.dev.yml up
-```
+# Доступ в контейнер
+make backend-sh            # Shell бэкенда
+make frontend-sh           # Shell фронтенда
 
-### Making Changes
-- **Backend**: Edit files in `backend/` → auto-reloads
-- **Frontend**: Edit files in `frontend/src/` → auto-reloads
-- **Database**: Use `docker-compose exec backend sqlite3` to inspect
-- **Logs**: `docker-compose logs -f [service_name]`
+# База данных
+make seed                  # Заполнить демо-данными
+make db-reset              # Сбросить базу
+make db-shell              # SQLite shell
 
-### Code Style
-```bash
-# Backend formatting
-docker-compose exec backend black .
-docker-compose exec backend isort .
-
-# Backend linting
-docker-compose exec backend flake8 .
+# Тестирование
+make test                  # pytest
+make format                # black, isort
+make lint                  # flake8
 ```
 
 ---
 
-## 🐛 Troubleshooting
+## Проверка работоспособности
 
-| Issue | Solution |
-|-------|----------|
-| Port already in use | `docker-compose down` or kill process |
-| Frontend can't reach backend | Wait 30s for backend healthcheck, verify CORS |
-| Database locked | `docker-compose down -v` to reset |
-| Out of memory | Reduce container resources or use PostgreSQL |
-| API returning 500 | Check `docker-compose logs backend` |
+После запуска убедитесь:
 
-👉 [Full Troubleshooting Guide](./DOCKER-COMPOSE.md#troubleshooting)
+- Backend отвечает: `http://localhost:5000/api/auth/health`
+- Frontend доступен: `http://localhost:3000`
+- Оба контейнера healthy: `make ps`
+- Нет CORS-ошибок в консоли браузера
+- Можно войти тестовым аккаунтом
 
 ---
 
-## 📞 Support
+## Решение проблем
 
-- **Issue Tracker**: GitHub Issues
-- **Documentation**: See `/docs` folder
-- **API Reference**: [API_DOCUMENTATION.md](./backend/API_DOCUMENTATION.md)
-- **Setup Help**: [BACKEND_SETUP.md](./backend/BACKEND_SETUP.md)
-
----
-
-## 📄 License
-
-This project is licensed under the **MIT License** - see [LICENSE](./LICENSE) for details.
+| Проблема | Решение |
+|----------|---------|
+| Порт занят | `docker-compose down` или убить процесс на порту |
+| Frontend не видит backend | Подождать 30 секунд (healthcheck), проверить CORS |
+| База данных заблокирована | `docker-compose down -v` для сброса volumes |
+| API возвращает 500 | `docker-compose logs backend` для диагностики |
+| Не хватает памяти | Уменьшить ресурсы контейнеров или перейти на PostgreSQL |
+| CORS ошибки | Проверить `CORS_ORIGINS` в `.env` |
 
 ---
 
-## 🎉 Credits
+## Безопасность
 
-Built for **Aqbobek Lyceum** school management system.
-
-**Tech Stack Credits**:
-- [Flask](https://flask.palletsprojects.com/) - Web framework
-- [SQLAlchemy](https://www.sqlalchemy.org/) - ORM
-- [React](https://react.dev/) - Frontend framework
-- [Groq](https://www.groq.com/) - AI inference
-- [Docker](https://www.docker.com/) - Containerization
-
----
-
-## 🚀 Roadmap
-
-- [ ] Mobile app (React Native)
-- [ ] SMS notifications (Twilio)
-- [ ] Email integration (SMTP)
-- [ ] Advanced reporting (PDF export)
-- [ ] Parent portal
-- [ ] Multi-language support
-- [ ] Payment integration
-- [ ] Offline mode
-- [ ] Advanced analytics dashboard
-- [ ] Third-party integrations (Google Classroom, etc.)
+- JWT-токены с ограниченным сроком жизни + refresh-токены
+- Role-based access control на всех защищённых эндпоинтах
+- Валидация владения ресурсом (учитель видит только свои классы)
+- Хэширование паролей через Werkzeug
+- Защита от SQL-инъекций через SQLAlchemy ORM
+- Секреты хранятся в `.env`, не попадают в git
+- Поддержка HTTPS/TLS в production
+- Аудит-логи auth-событий (IP, браузер, статус)
+- WebAuthn для биометрической аутентификации
 
 ---
 
-**Last Updated**: 2024  
-**Version**: 1.0.0  
-**Status**: ✅ Active Development
+## Документация
+
+| Документ | Содержание |
+|----------|-----------|
+| [backend/BACKEND_SETUP.md](backend/BACKEND_SETUP.md) | Настройка Flask, база данных, сервисы |
+| [backend/API_DOCUMENTATION.md](backend/API_DOCUMENTATION.md) | Полная документация всех эндпоинтов |
+| [backend/README.md](backend/README.md) | Структура бэкенда, модели, конфигурация |
+
+
+Made by ITshechka team.
