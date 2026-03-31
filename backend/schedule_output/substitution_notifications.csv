@@ -1,0 +1,43 @@
+notif_type,recipient_type,recipient_id,message,affected_day,affected_period,subject
+substitution_assigned,teacher,T003,"[PUSH] You are covering Kairat Askarova's lesson: math | class 7A | Monday, period 3, room R009.",Monday,3,math
+teacher_changed,student,7A,[PUSH] Your math lesson on Monday (period 3) will be taught by a substitute teacher. Room unchanged: R009.,Monday,3,math
+parent_notice,parent,parents_of_7A,[PUSH] Notice for class 7A: math on Monday (period 3) has a substitute teacher due to teacher absence.,Monday,3,math
+substitution_assigned,teacher,T003,"[PUSH] You are covering Kairat Askarova's lesson: math | class 7B | Friday, period 2, room R010.",Friday,2,math
+teacher_changed,student,7B,[PUSH] Your math lesson on Friday (period 2) will be taught by a substitute teacher. Room unchanged: R010.,Friday,2,math
+parent_notice,parent,parents_of_7B,[PUSH] Notice for class 7B: math on Friday (period 2) has a substitute teacher due to teacher absence.,Friday,2,math
+substitution_assigned,teacher,T002,"[PUSH] You are covering Kairat Askarova's lesson: math | class 7C | Tuesday, period 4, room R015.",Tuesday,4,math
+teacher_changed,student,7C,[PUSH] Your math lesson on Tuesday (period 4) will be taught by a substitute teacher. Room unchanged: R015.,Tuesday,4,math
+parent_notice,parent,parents_of_7C,[PUSH] Notice for class 7C: math on Tuesday (period 4) has a substitute teacher due to teacher absence.,Tuesday,4,math
+substitution_assigned,teacher,T005,"[PUSH] You are covering Kairat Askarova's lesson: math | class 8B | Thursday, period 7, room R015.",Thursday,7,math
+teacher_changed,student,8B,[PUSH] Your math lesson on Thursday (period 7) will be taught by a substitute teacher. Room unchanged: R015.,Thursday,7,math
+parent_notice,parent,parents_of_8B,[PUSH] Notice for class 8B: math on Thursday (period 7) has a substitute teacher due to teacher absence.,Thursday,7,math
+lesson_cancelled,student,8B,[PUSH] CANCELLED: math on Thursday period 2 for class 8B. No substitute available.,Thursday,2,math
+parent_notice,parent,parents_of_8B,[PUSH] Notice for class 8B: math on Thursday (period 2) is CANCELLED due to teacher absence.,Thursday,2,math
+substitution_assigned,teacher,T004,"[PUSH] You are covering Kairat Askarova's lesson: math | class 9A | Friday, period 3, room R018.",Friday,3,math
+teacher_changed,student,9A,[PUSH] Your math lesson on Friday (period 3) will be taught by a substitute teacher. Room unchanged: R018.,Friday,3,math
+parent_notice,parent,parents_of_9A,[PUSH] Notice for class 9A: math on Friday (period 3) has a substitute teacher due to teacher absence.,Friday,3,math
+substitution_assigned,teacher,T002,"[PUSH] You are covering Kairat Askarova's lesson: math | class 9B | Tuesday, period 1, room R004.",Tuesday,1,math
+teacher_changed,student,9B,[PUSH] Your math lesson on Tuesday (period 1) will be taught by a substitute teacher. Room unchanged: R004.,Tuesday,1,math
+parent_notice,parent,parents_of_9B,[PUSH] Notice for class 9B: math on Tuesday (period 1) has a substitute teacher due to teacher absence.,Tuesday,1,math
+substitution_assigned,teacher,T003,"[PUSH] You are covering Kairat Askarova's lesson: math | class 10A | Wednesday, period 5, room R005.",Wednesday,5,math
+teacher_changed,student,10A,[PUSH] Your math lesson on Wednesday (period 5) will be taught by a substitute teacher. Room unchanged: R005.,Wednesday,5,math
+parent_notice,parent,parents_of_10A,[PUSH] Notice for class 10A: math on Wednesday (period 5) has a substitute teacher due to teacher absence.,Wednesday,5,math
+substitution_assigned,teacher,T003,"[PUSH] You are covering Kairat Askarova's lesson: math | class 10A | Wednesday, period 2, room R018.",Wednesday,2,math
+teacher_changed,student,10A,[PUSH] Your math lesson on Wednesday (period 2) will be taught by a substitute teacher. Room unchanged: R018.,Wednesday,2,math
+parent_notice,parent,parents_of_10A,[PUSH] Notice for class 10A: math on Wednesday (period 2) has a substitute teacher due to teacher absence.,Wednesday,2,math
+substitution_assigned,teacher,T005,"[PUSH] You are covering Kairat Askarova's lesson: math | class 10A | Wednesday, period 4, room R015.",Wednesday,4,math
+teacher_changed,student,10A,[PUSH] Your math lesson on Wednesday (period 4) will be taught by a substitute teacher. Room unchanged: R015.,Wednesday,4,math
+parent_notice,parent,parents_of_10A,[PUSH] Notice for class 10A: math on Wednesday (period 4) has a substitute teacher due to teacher absence.,Wednesday,4,math
+lesson_cancelled,student,10B,[PUSH] CANCELLED: math on Tuesday period 6 for class 10B. No substitute available.,Tuesday,6,math
+parent_notice,parent,parents_of_10B,[PUSH] Notice for class 10B: math on Tuesday (period 6) is CANCELLED due to teacher absence.,Tuesday,6,math
+substitution_assigned,teacher,T005,"[PUSH] You are covering Kairat Askarova's lesson: math | class 10B | Wednesday, period 3, room R011.",Wednesday,3,math
+teacher_changed,student,10B,[PUSH] Your math lesson on Wednesday (period 3) will be taught by a substitute teacher. Room unchanged: R011.,Wednesday,3,math
+parent_notice,parent,parents_of_10B,[PUSH] Notice for class 10B: math on Wednesday (period 3) has a substitute teacher due to teacher absence.,Wednesday,3,math
+lesson_cancelled,student,11A,[PUSH] CANCELLED: math on Monday period 7 for class 11A. No substitute available.,Monday,7,math
+parent_notice,parent,parents_of_11A,[PUSH] Notice for class 11A: math on Monday (period 7) is CANCELLED due to teacher absence.,Monday,7,math
+substitution_assigned,teacher,T003,"[PUSH] You are covering Kairat Askarova's lesson: math | class 11B | Tuesday, period 3, room R005.",Tuesday,3,math
+teacher_changed,student,11B,[PUSH] Your math lesson on Tuesday (period 3) will be taught by a substitute teacher. Room unchanged: R005.,Tuesday,3,math
+parent_notice,parent,parents_of_11B,[PUSH] Notice for class 11B: math on Tuesday (period 3) has a substitute teacher due to teacher absence.,Tuesday,3,math
+substitution_assigned,teacher,T003,"[PUSH] You are covering Kairat Askarova's lesson: math | class 11C | Monday, period 4, room R007.",Monday,4,math
+teacher_changed,student,11C,[PUSH] Your math lesson on Monday (period 4) will be taught by a substitute teacher. Room unchanged: R007.,Monday,4,math
+parent_notice,parent,parents_of_11C,[PUSH] Notice for class 11C: math on Monday (period 4) has a substitute teacher due to teacher absence.,Monday,4,math
