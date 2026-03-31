@@ -21,6 +21,9 @@ import SchedulePage from './pages/student/SchedulePage';
 import AchievementsPage from './pages/student/AchievementsPage';
 import ClassesPage from './pages/teacher/ClassesPage';
 import AnalyticsPage from './pages/teacher/AnalyticsPage';
+import TeacherGradesPage from './pages/teacher/GradesPage';
+import TeacherSchedulePage from './pages/teacher/SchedulePage';
+import StudentAnalyticsPage from './pages/student/AnalyticsPage';
 import NotificationContainer from './components/NotificationContainer';
 import './styles/globals.css';
 
@@ -105,6 +108,11 @@ function App() {
               <Layout><AchievementsPage /></Layout>
             </ProtectedRoute>
           } />
+          <Route path="/student/analytics" element={
+            <ProtectedRoute allowedRoles={['student']}>
+              <Layout><StudentAnalyticsPage /></Layout>
+            </ProtectedRoute>
+          } />
           <Route path="/student/*" element={
             <ProtectedRoute allowedRoles={['student']}>
               <Layout><StudentDashboard /></Layout>
@@ -120,6 +128,16 @@ function App() {
           <Route path="/teacher/students" element={
             <ProtectedRoute allowedRoles={['teacher']}>
               <Layout><ClassesPage /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/teacher/grades" element={
+            <ProtectedRoute allowedRoles={['teacher']}>
+              <Layout><TeacherGradesPage /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/teacher/schedule" element={
+            <ProtectedRoute allowedRoles={['teacher']}>
+              <Layout><TeacherSchedulePage /></Layout>
             </ProtectedRoute>
           } />
           <Route path="/teacher/analytics" element={
