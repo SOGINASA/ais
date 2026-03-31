@@ -186,7 +186,7 @@ export const StudentDashboard = () => {
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-base font-semibold text-gray-800">Достижения</h2>
-                <Link to="/achievements" className="text-xs text-blue-500 hover:underline">Все →</Link>
+                <Link to="/student/achievements" className="text-xs text-blue-500 hover:underline">Все →</Link>
               </div>
               {recentAchievements.length === 0 ? (
                 <p className="text-gray-400 text-sm">Пока нет достижений</p>
@@ -210,10 +210,10 @@ export const StudentDashboard = () => {
               <h2 className="text-base font-semibold text-gray-800 mb-4">Быстрый доступ</h2>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { to: '/grades',       label: 'Оценки',     emoji: '📊', color: 'bg-blue-50 text-blue-700' },
-                  { to: '/schedule',     label: 'Расписание', emoji: '📅', color: 'bg-emerald-50 text-emerald-700' },
-                  { to: '/achievements', label: 'Достижения', emoji: '🏆', color: 'bg-amber-50 text-amber-700' },
-                  { to: '/ai-tutor',     label: 'AI тьютор',  emoji: '🤖', color: 'bg-violet-50 text-violet-700' },
+                  { to: '/student/grades',       label: 'Оценки',     emoji: '📊', color: 'bg-blue-50 text-blue-700' },
+                  { to: '/student/schedule',     label: 'Расписание', emoji: '📅', color: 'bg-emerald-50 text-emerald-700' },
+                  { to: '/student/achievements', label: 'Достижения', emoji: '🏆', color: 'bg-amber-50 text-amber-700' },
+                  { to: '/student/ai-tutor',     label: 'AI тьютор',  emoji: '🤖', color: 'bg-violet-50 text-violet-700' },
                 ].map(link => (
                   <Link
                     key={link.to}

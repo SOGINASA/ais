@@ -6,49 +6,37 @@ import { useUIStore } from '../store/useUIStore';
  * @returns {Object} { addNotification, removeNotification, notifications }
  */
 export const useNotification = () => {
-  const { notifications, addNotification, removeNotification } = useUIStore();
+  const addNotification = useUIStore((s) => s.addNotification);
 
-  const notify = useCallback(
-    (message, type = 'info', duration = 3000) => {
-      return addNotification({
-        message,
-        type, // 'success', 'error', 'warning', 'info'
-        duration,
-        autoClose: true,
-      });
+  const success = useCallback(
+    (message) => {
+      addNotification({ type: 'success', message });
     },
     [addNotification]
   );
 
-  const success = useCallback(
-    (message, duration = 3000) => notify(message, 'success', duration),
-    [notify]
-  );
-
   const error = useCallback(
-    (message, duration = 5000) => notify(message, 'error', duration),
-    [notify]
+    (message) => {
+      addNotification({ type: 'error', message });
+    },
+    [addNotification]
   );
 
   const warning = useCallback(
-    (message, duration = 4000) => notify(message, 'warning', duration),
-    [notify]
+    (message) => {
+      addNotification({ type: 'warning', message });
+    },
+    [addNotification]
   );
 
   const info = useCallback(
-    (message, duration = 3000) => notify(message, 'info', duration),
-    [notify]
+    (message) => {
+      addNotification({ type: 'info', message });
+    },
+    [addNotification]
   );
 
-  return {
-    notify,
-    success,
-    error,
-    warning,
-    info,
-    remove: removeNotification,
-    notifications,
-  };
+  return { success, error, warning, info };
 };
 
 export default useNotification;

@@ -2,7 +2,9 @@ import React from 'react';
 import { useUIStore } from '../store/useUIStore';
 
 export const NotificationContainer = () => {
-  const { notifications } = useUIStore();
+  const notifications = useUIStore((s) => s.notifications || []);
+
+  if (!notifications || notifications.length === 0) return null;
 
   const notificationStyles = {
     success: 'bg-green-100 border-l-4 border-green-500 text-green-800',

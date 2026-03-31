@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   BarChart2, Bot, CalendarDays, Trophy,
   Mail, Lock, CheckCircle2,
@@ -27,16 +28,22 @@ export const LoginPage = () => {
   const [selected, setSelected]     = useState(null);
   const { login }          = useAuthStore();
   const { success, error } = useNotification();
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     if (!identifier.trim()) return;
     setLoading(true);
     try {
-      await login(identifier.trim(), password || 'password');
+      const user = await login(identifier.trim(), password || 'password');
       success('Добро пожаловать!');
+      const role = user?.user_type || user?.role;
+      const paths = { admin: '/admin', teacher: '/teacher', parent: '/parent', student: '/student' };
+      navigate(paths[role] || '/student', { replace: true });
     } catch (err) {
-      error(err.message);
+      const msg = err?.response?.data?.error || err?.message || 'Ошибка входа';
+      console.error('Login error:', err);
+      error(msg);
     } finally {
       setLoading(false);
     }

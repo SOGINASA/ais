@@ -178,6 +178,9 @@ def missing_token_callback(error):
 def init_db():
     """Initialize database"""
     print("Initializing database...")
+    # Drop all tables
+    db.drop_all()
+    # Create all tables
     db.create_all()
     print("Database initialized!")
 
