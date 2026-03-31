@@ -8,7 +8,7 @@ services:
       dockerfile: Dockerfile.dev
     container_name: aqbobek_backend_dev
     ports:
-      - "5000:5000"
+      - "5252:5252"
     volumes:
       - ./backend:/app
       - /app/__pycache__
@@ -24,7 +24,7 @@ services:
       - ./backend/.env
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('localhost', 5000), timeout=5)"]
+      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('localhost', 5252), timeout=5)"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -44,7 +44,7 @@ services:
       - ./frontend/public:/app/public
       - /app/node_modules
     environment:
-      - REACT_APP_API_BASE=http://backend:5000
+      - REACT_APP_API_BASE=http://backend:5252
       - REACT_APP_USE_MOCK=false
       - NODE_ENV=development
       - CHOKIDAR_USEPOLLING=true

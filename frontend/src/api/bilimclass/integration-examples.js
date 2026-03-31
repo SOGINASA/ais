@@ -1,4 +1,4 @@
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5252';
 
 const apiCall = async (endpoint, options = {}) => {
   const token = localStorage.getItem('access_token');
@@ -218,7 +218,7 @@ const useNotifications = () => {
     if (!token) return;
     
     const ws = new WebSocket(
-      `ws://${window.location.hostname}:5000/ws/notifications?token=${token}`
+      `ws://${window.location.hostname}:5252/ws/notifications?token=${token}`
     );
     
     ws.onmessage = (event) => {

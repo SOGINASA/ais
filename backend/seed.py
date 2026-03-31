@@ -99,7 +99,8 @@ def seed_database():
                 email=f"teacher{i+1}@school.com",
                 nickname=f"teacher{i+1}",
                 full_name=name,
-                role="teacher"
+                role="teacher",
+                user_type="teacher"
             )
             teacher.set_password("teacher123")
             teachers.append(teacher)
@@ -127,6 +128,7 @@ def seed_database():
                     nickname=f"student{len(students)+1}",
                     full_name=f"{name} ({cls.name})",
                     role="student",
+                    user_type="student",
                     class_name=cls.name,
                     phone=f"+7 777 {random.randint(100, 999)} {random.randint(1000, 9999)}",
                     birthday=__import__('datetime').date(2006, random.randint(1, 12), random.randint(1, 28)),
@@ -324,6 +326,7 @@ def seed_database():
             nickname="daria",
             full_name="Дарья Иванова",
             role="teacher",
+            user_type="teacher",
             is_active=True,
             is_verified=True,
         )
@@ -362,6 +365,7 @@ def seed_database():
             nickname="ayman",
             full_name="Айман Смагулов",
             role="student",
+            user_type="student",
             class_name=cls_10a.name if cls_10a else "10A",
             is_active=True,
             is_verified=True,
@@ -376,6 +380,7 @@ def seed_database():
             nickname="zhanna",
             full_name="Жанна Смагулова",
             role="parent",
+            user_type="parent",
             is_active=True,
             is_verified=True,
             parent_id=None,  # parent_id is on the STUDENT (child points to parent)

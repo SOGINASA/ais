@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useUIStore } from '../store/useUIStore';
 
-const WS_BASE = (process.env.REACT_APP_API_BASE || 'http://localhost:5000')
+const WS_BASE = (process.env.REACT_APP_API_BASE || 'http://localhost:5252')
   .replace(/^http/, 'ws');
 
 export const useWebSocket = () => {
@@ -34,7 +34,7 @@ export const useWebSocket = () => {
       ws.onclose = (event) => {
         if (!event.wasClean) {
           // Reconnect after 5s on unexpected close
-          reconnectTimer.current = setTimeout(connect, 5000);
+          reconnectTimer.current = setTimeout(connect, 5252);
         }
       };
     };

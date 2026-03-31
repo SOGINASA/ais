@@ -3,7 +3,7 @@ import { mockStudents, mockTeachers, mockParents } from '../data/students';
 import { mockGrades, mockQuarterGrades, mockAttendance } from '../data/grades';
 import { mockSchedule, mockAchievements } from '../data/schedule';
 
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5000';
+const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5252';
 
 export const handlers = [
   // GET /api/students — список студентов

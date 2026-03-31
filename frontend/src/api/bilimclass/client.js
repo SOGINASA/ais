@@ -24,10 +24,17 @@ bilimClassClient.interceptors.response.use(
       // Don't clear session for login/register requests
       const isAuthRequest = error.config?.url?.includes('/auth/');
       if (!isAuthRequest) {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('user');
-        if (!window.location.pathname.includes('/login')) {
-          window.location.replace('/login');
+        // Only clear session if the request that failed used the current token.
+        // This prevents a race condition where pre-login 401 responses arrive
+        // after a successful login and wipe the newly stored token.
+        const currentToken = localStorage.getItem('access_token');
+        const requestToken = error.config?.headers?.Authorization?.replace('Bearer ', '');
+        if (!currentToken || currentToken === requestToken) {
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('user');
+          if (!window.location.pathname.includes('/login')) {
+            window.location.replace('/login');
+          }
         }
       }
     }

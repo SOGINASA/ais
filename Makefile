@@ -121,7 +121,7 @@ env:
 # Health check
 health:
 	@echo "Backend health:"
-	@docker-compose exec backend curl -f http://localhost:5000/api/auth/health || echo "Unhealthy"
+	@docker-compose exec backend curl -f http://localhost:5252/api/auth/health || echo "Unhealthy"
 	@echo ""
 	@echo "Frontend health:"
 	@curl -f http://localhost:3000 > /dev/null && echo "Healthy" || echo "Unhealthy"

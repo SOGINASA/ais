@@ -16,6 +16,6 @@ COPY . .
 
 RUN mkdir -p /app/database /app/logs && chmod 777 /app/database /app/logs
 
-EXPOSE 5000
+EXPOSE 5252
 
 CMD ["flask", "run", "--host=0.0.0.0"]

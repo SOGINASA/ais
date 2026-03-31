@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
     container_name: aqbobek_backend
     ports:
-      - "5000:5000"
+      - "5252:5252"
     env_file:
       - .env
     environment:
@@ -20,7 +20,7 @@ services:
       - ./logs:/app/logs
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/api/auth/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:5252/api/auth/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -36,7 +36,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - REACT_APP_API_BASE=http://backend:5000
+      - REACT_APP_API_BASE=http://backend:5252
       - REACT_APP_USE_MOCK=false
     depends_on:
       backend:

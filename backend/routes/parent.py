@@ -103,7 +103,6 @@ def get_child_attendance():
             'present': present,
             'absent': absent,
             'late': late,
-<<<<<<< HEAD
             'absent_percentage': round((absent + late) / total * 100, 1) if total else 0.0,
         }
     }), 200

@@ -18,10 +18,10 @@ RUN mkdir -p /app/database /app/logs && chmod 777 /app/database /app/logs
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-EXPOSE 5000
+EXPOSE 5252
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD python -c "import requests; requests.get('http://localhost:5000/api/auth/health', timeout=5)"
+  CMD python -c "import requests; requests.get('http://localhost:5252/api/auth/health', timeout=5)"
 
 CMD ["/entrypoint.sh"]
