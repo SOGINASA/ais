@@ -1,10 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts';
-import { useAuthStore } from '../../store/useAuthStore';
-import { useStudentsStore } from '../../store/useStudentsStore';
-import { useGradesStore } from '../../store/useGradesStore';
+import { useParentStore } from '../../store/useParentStore';
 
 const CHART_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
@@ -15,6 +13,8 @@ const TYPE_LABELS = {
   homework: 'Домашняя работа',
   exam: 'Экзамен',
 };
+
+const val = (g) => g.score ?? g.grade ?? 0;
 
 const gradeColorClass = (g) => {
   if (g >= 5) return 'bg-green-100 text-green-700 border-green-200';
@@ -32,41 +32,35 @@ const gradeTextColor = (avg) => {
 };
 
 export default function ChildGradesPage() {
-  const user = useAuthStore((s) => s.user);
-  const { students, fetchStudents } = useStudentsStore();
-  const { grades, fetchGrades } = useGradesStore();
+  const { child, grades, loading, fetchChild, fetchGrades } = useParentStore();
   const [activeSubject, setActiveSubject] = useState('Все');
 
   useEffect(() => {
-    fetchStudents();
-  }, [fetchStudents]);
+    fetchChild();
+    fetchGrades();
+  }, [fetchChild, fetchGrades]);
 
-  useEffect(() => {
-    if (user?.children?.[0]) {
-      fetchGrades(user.children[0]);
-    }
-  }, [user?.children, fetchGrades]);
-
-  const childId = user?.children?.[0];
-  const child = (Array.isArray(students) ? students : []).find((s) => s.id === childId);
   const safeGrades = Array.isArray(grades) ? grades : [];
 
-  const subjects = ['Все', ...new Set(safeGrades.map((g) => g.subject))];
+  const subjects = useMemo(() => ['Все', ...new Set(safeGrades.map((g) => g.subject))], [safeGrades]);
 
-  const filteredGrades = activeSubject === 'Все'
-    ? safeGrades
-    : safeGrades.filter((g) => g.subject === activeSubject);
+  const filteredGrades = useMemo(() =>
+    activeSubject === 'Все'
+      ? safeGrades
+      : safeGrades.filter((g) => g.subject === activeSubject),
+  [safeGrades, activeSubject]);
 
   const sortedGrades = [...filteredGrades].sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  // Per-subject summary
-  const subjectStats = [...new Set(safeGrades.map((g) => g.subject))].map((subj) => {
-    const sg = safeGrades.filter((g) => g.subject === subj);
-    const avg = sg.length > 0
-      ? (sg.reduce((s, g) => s + g.grade, 0) / sg.length)
-      : 0;
-    return { subject: subj, avg: parseFloat(avg.toFixed(2)), count: sg.length };
-  });
+  const subjectStats = useMemo(() => {
+    return [...new Set(safeGrades.map((g) => g.subject))].map((subj) => {
+      const sg = safeGrades.filter((g) => g.subject === subj);
+      const total = sg.reduce((s, g) => s + val(g) * (g.weight || 1), 0);
+      const w = sg.reduce((s, g) => s + (g.weight || 1), 0);
+      const avg = w ? total / w : 0;
+      return { subject: subj, avg: parseFloat(avg.toFixed(2)), count: sg.length };
+    });
+  }, [safeGrades]);
 
   const chartData = subjectStats.map((s) => ({
     name: s.subject.length > 10 ? s.subject.slice(0, 10) + '…' : s.subject,
@@ -74,20 +68,21 @@ export default function ChildGradesPage() {
     avg: s.avg,
   }));
 
-  const overallAvg = safeGrades.length > 0
-    ? (safeGrades.reduce((s, g) => s + g.grade, 0) / safeGrades.length).toFixed(2)
-    : '—';
+  const overallAvg = useMemo(() => {
+    if (!safeGrades.length) return '—';
+    const total = safeGrades.reduce((s, g) => s + val(g) * (g.weight || 1), 0);
+    const w = safeGrades.reduce((s, g) => s + (g.weight || 1), 0);
+    return w ? (total / w).toFixed(2) : '—';
+  }, [safeGrades]);
 
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">
-          Оценки:{' '}
-          <span className="text-blue-600">{child?.full_name ?? '...'}</span>
+          Оценки: <span className="text-blue-600">{child?.full_name ?? '...'}</span>
         </h1>
         <p className="text-sm text-gray-500 mt-1">
-          Класс: {child?.class ?? '—'} · Всего оценок: {safeGrades.length} · Средний балл: {overallAvg}
+          Класс: {child?.class_name || child?.class || '—'} · Всего оценок: {safeGrades.length} · Средний балл: {overallAvg}
         </p>
       </div>
 
@@ -104,9 +99,7 @@ export default function ChildGradesPage() {
             >
               <p className="text-xs text-gray-500 truncate">{s.subject}</p>
               <div className="flex items-end justify-between mt-2">
-                <span className={`text-2xl font-bold ${gradeTextColor(s.avg)}`}>
-                  {s.avg.toFixed(1)}
-                </span>
+                <span className={`text-2xl font-bold ${gradeTextColor(s.avg)}`}>{s.avg.toFixed(1)}</span>
                 <span className="text-xs text-gray-400">{s.count} оц.</span>
               </div>
             </button>
@@ -123,21 +116,16 @@ export default function ChildGradesPage() {
               <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
               <XAxis dataKey="name" tick={{ fontSize: 11 }} />
               <YAxis domain={[0, 5]} tick={{ fontSize: 11 }} />
-              <Tooltip
-                formatter={(v, _, props) => [v, props.payload.fullName]}
-                labelFormatter={() => ''}
-              />
+              <Tooltip formatter={(v, _, props) => [v, props.payload.fullName]} labelFormatter={() => ''} />
               <Bar dataKey="avg" name="Средний балл" radius={[6, 6, 0, 0]}>
-                {chartData.map((_, i) => (
-                  <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                ))}
+                {chartData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
       )}
 
-      {/* Subject filter tabs */}
+      {/* Grades table */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-gray-900">Журнал оценок</h3>
@@ -150,9 +138,7 @@ export default function ChildGradesPage() {
               key={subj}
               onClick={() => setActiveSubject(subj)}
               className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-colors ${
-                activeSubject === subj
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                activeSubject === subj ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
               {subj}
@@ -160,7 +146,9 @@ export default function ChildGradesPage() {
           ))}
         </div>
 
-        {sortedGrades.length === 0 ? (
+        {loading ? (
+          <p className="text-gray-400 text-sm text-center py-10">Загрузка...</p>
+        ) : sortedGrades.length === 0 ? (
           <p className="text-gray-400 text-sm text-center py-10">Нет оценок для отображения</p>
         ) : (
           <div className="overflow-x-auto">
@@ -176,33 +164,18 @@ export default function ChildGradesPage() {
               </thead>
               <tbody>
                 {sortedGrades.map((g, i) => (
-                  <tr
-                    key={g.id}
-                    className={`border-b border-gray-50 hover:bg-gray-50 transition-colors ${
-                      i % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'
-                    }`}
-                  >
+                  <tr key={g.id || i} className={`border-b border-gray-50 hover:bg-gray-50 transition-colors ${i % 2 === 0 ? '' : 'bg-gray-50/40'}`}>
                     <td className="py-3 px-3 text-gray-500 whitespace-nowrap">
-                      {new Date(g.date).toLocaleDateString('ru-RU', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric',
-                      })}
+                      {new Date(g.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </td>
                     <td className="py-3 px-3 font-medium text-gray-800">{g.subject}</td>
                     <td className="py-3 px-3 text-center">
-                      <span
-                        className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold border ${gradeColorClass(g.grade)}`}
-                      >
-                        {g.grade}
+                      <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold border ${gradeColorClass(val(g))}`}>
+                        {val(g)}
                       </span>
                     </td>
-                    <td className="py-3 px-3 text-gray-500">
-                      {TYPE_LABELS[g.type] || g.type || '—'}
-                    </td>
-                    <td className="py-3 px-3 text-center text-gray-400 text-xs">
-                      {g.weight ?? 1}
-                    </td>
+                    <td className="py-3 px-3 text-gray-500">{TYPE_LABELS[g.type] || g.type || '—'}</td>
+                    <td className="py-3 px-3 text-center text-gray-400 text-xs">{g.weight ?? 1}</td>
                   </tr>
                 ))}
               </tbody>

@@ -56,6 +56,7 @@ def create_app():
     from routes.teacher import teacher_bp
     from routes.ai import ai_bp
     from routes.schedule import schedule_bp
+    from routes.parent import parent_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(oauth_bp, url_prefix='/api/auth/oauth')
@@ -67,6 +68,7 @@ def create_app():
     app.register_blueprint(teacher_bp, url_prefix='/api/teacher')
     app.register_blueprint(ai_bp, url_prefix='/api/ai')
     app.register_blueprint(schedule_bp, url_prefix='/api/schedule')
+    app.register_blueprint(parent_bp, url_prefix='/api/parent')
 
     # WebSocket для real-time уведомлений
     @sock.route('/ws/notifications')
@@ -224,4 +226,4 @@ def generate_vapid():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(debug=True, host="0.0.0.0", port=5252)

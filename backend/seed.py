@@ -302,6 +302,100 @@ def seed_database():
         db.session.commit()
         print(f"✅ Created {notification_count} notifications")
         
+        # ===== DEMO ACCOUNTS (matching LoginPage) =====
+        print("🎭 Creating demo accounts...")
+
+        # Demo admin
+        demo_admin = User(
+            email="admin@school.kz",
+            nickname="admin_demo",
+            full_name="Администратор",
+            role="admin",
+            user_type="admin",
+            is_active=True,
+            is_verified=True,
+        )
+        demo_admin.set_password("password")
+        db.session.add(demo_admin)
+
+        # Demo teacher (Daria)
+        demo_teacher = User(
+            email="daria@school.kz",
+            nickname="daria",
+            full_name="Дарья Иванова",
+            role="teacher",
+            is_active=True,
+            is_verified=True,
+        )
+        demo_teacher.set_password("password")
+        db.session.add(demo_teacher)
+        db.session.flush()
+
+        # Demo student (Ayman) — in 10A
+        cls_10a = ClassModel.query.filter_by(name="10A").first() or classes[0]
+        demo_student = User(
+            email="ayman@school.kz",
+            nickname="ayman",
+            full_name="Айман Смагулов",
+            role="student",
+            class_name=cls_10a.name if cls_10a else "10A",
+            is_active=True,
+            is_verified=True,
+        )
+        demo_student.set_password("password")
+        db.session.add(demo_student)
+        db.session.flush()
+
+        # Demo parent (Zhanna — parent of Ayman)
+        demo_parent = User(
+            email="zhanna.smagulova@example.kz",
+            nickname="zhanna",
+            full_name="Жанна Смагулова",
+            role="parent",
+            is_active=True,
+            is_verified=True,
+            parent_id=None,  # parent_id is on the STUDENT (child points to parent)
+        )
+        demo_parent.set_password("password")
+        db.session.add(demo_parent)
+        db.session.flush()
+
+        # Link Ayman → Zhanna
+        demo_student.parent_id = demo_parent.id
+
+        # Add some grades for demo student
+        for _ in range(15):
+            subject = random.choice(list(subjects.values()))
+            days_ago = random.randint(0, 60)
+            date = (now - timedelta(days=days_ago)).date()
+            month = date.month
+            quarter = 1 if month in [9, 10, 11] else 2 if month in [12, 1] else 3 if month in [2, 3, 4] else 4
+            grade = Grade(
+                student_id=demo_student.id,
+                subject_id=subject.id,
+                teacher_id=demo_teacher.id,
+                score=random.choice([3, 4, 4, 5, 5]),
+                type=random.choice(['lesson', 'quiz', 'lab']),
+                weight=random.choice([1.0, 1.0, 2.0]),
+                date=date,
+                quarter=quarter,
+            )
+            db.session.add(grade)
+
+        # Add attendance for demo student
+        for days_ago in range(30):
+            date = (now - timedelta(days=days_ago)).date()
+            attendance = Attendance(
+                student_id=demo_student.id,
+                date=date,
+                status=random.choices(['present', 'absent', 'late'], weights=[85, 10, 5], k=1)[0],
+                marked_by_id=demo_teacher.id,
+            )
+            db.session.add(attendance)
+
+        db.session.commit()
+        print("✅ Demo accounts created (password: 'password' for all)")
+
         # ===== ИТОГИ =====
         print("\n" + "="*50)
         print("✨ Database seeded successfully!")
@@ -322,6 +416,12 @@ def seed_database():
   Admin:   admin@school.com / admin123
   Teacher: teacher1@school.com / teacher123
   Student: student1@school.com / student123
+
+🎭 Demo Accounts (LoginPage):
+  Admin:   admin@school.kz / password
+  Teacher: daria@school.kz / password
+  Student: ayman@school.kz / password
+  Parent:  zhanna.smagulova@example.kz / password
         """)
 
 

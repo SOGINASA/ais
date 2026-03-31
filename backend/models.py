@@ -33,6 +33,7 @@ class User(db.Model):
     class_name = db.Column(db.String(10), nullable=True)  # e.g., "10A" for students
     phone = db.Column(db.String(20), nullable=True)
     birthday = db.Column(db.Date, nullable=True)
+    parent_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
 
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     last_login = db.Column(db.DateTime)
@@ -77,6 +78,9 @@ class User(db.Model):
             'created_at': _utc_iso(self.created_at),
             'last_login': _utc_iso(self.last_login),
             'oauth_provider': self.oauth_provider,
+            'class_name': self.class_name,
+            'avatar': self.avatar_url,
+            'phone': self.phone,
         }
         if include_sensitive:
             data['is_active'] = self.is_active
