@@ -10,6 +10,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import db, User, Grade
 from services.analytics_service import StudentAnalytics
 from services.ai_service import AIAnalyzer
+from services.ml_prediction_service import predict_score, predict_risk
 
 ai_bp = Blueprint('ai', __name__)
 
@@ -160,6 +161,10 @@ def get_student_predictions(student_id):
     # Простое предсказание на основе тренда
     trend = StudentAnalytics.calculate_trend(student_id)
     
+    # ML-предсказание оценки
+    ml_score = predict_score(student)
+    ml_risk = predict_risk(student)
+
     # Определяем направление
     if trend > 10:
         future_trend = 'improving'
@@ -179,13 +184,19 @@ def get_student_predictions(student_id):
     
     risk = StudentAnalytics.detect_risk(student_id)
     
+    # Если ML-модель дала прогноз — добавляем
+    predicted_next_score = ml_score['predicted_score'] if ml_score else None
+    risk_probability = ml_risk['risk_probability'] if ml_risk else None
+
     return jsonify({
         'success': True,
         'student_id': student_id,
         'data': {
             'future_trend': future_trend,
-            'confidence': round(abs(trend) / 100, 2),  # Простое вычисление confidence
+            'confidence': round(abs(trend) / 100, 2),
             'prediction': prediction,
+            'predicted_next_score': predicted_next_score,
+            'risk_probability': risk_probability,
             'recommended_actions': [
                 'Increase study time',
                 'Attend tutoring sessions',

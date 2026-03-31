@@ -24,6 +24,7 @@ import AnalyticsPage from './pages/teacher/AnalyticsPage';
 import TeacherGradesPage from './pages/teacher/GradesPage';
 import TeacherSchedulePage from './pages/teacher/SchedulePage';
 import StudentAnalyticsPage from './pages/student/AnalyticsPage';
+import StudentAITutorPage from './pages/student/StudentAITutorPage';
 import NotificationContainer from './components/NotificationContainer';
 import './styles/globals.css';
 
@@ -111,6 +112,11 @@ function App() {
           <Route path="/student/analytics" element={
             <ProtectedRoute allowedRoles={['student']}>
               <Layout><StudentAnalyticsPage /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/student/ai-tutor" element={
+            <ProtectedRoute allowedRoles={['student']}>
+              <Layout><StudentAITutorPage /></Layout>
             </ProtectedRoute>
           } />
           <Route path="/student/*" element={

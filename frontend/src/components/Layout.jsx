@@ -13,6 +13,7 @@ import {
   LogOut,
   Menu,
   X,
+  Bot,
 } from 'lucide-react';
 
 const Layout = ({ children }) => {
@@ -46,6 +47,7 @@ const Layout = ({ children }) => {
     { path: '/student/schedule', label: 'Расписание', icon: Calendar },
     { path: '/student/achievements', label: 'Достижения', icon: Award },
     { path: '/student/analytics', label: 'Аналитика', icon: LayoutDashboard },
+    { path: '/student/ai-tutor', label: 'AI Тьютор', icon: Bot },
   ];
 
   const teacherMenuItems = [

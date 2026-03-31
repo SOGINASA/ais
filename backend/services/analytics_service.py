@@ -3,9 +3,12 @@ Analytics service для вычисления метрик студентов.
 Используется перед отправкой в LLM (Groq API).
 """
 from datetime import datetime, timezone, timedelta
-from models import db, Grade, Attendance, Achievement
+from models import db, Grade, Attendance, Achievement, User
 from sqlalchemy import func
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class StudentAnalytics:
@@ -89,14 +92,28 @@ class StudentAnalytics:
     def detect_risk(student_id):
         """
         Определяет риск падения успеваемости.
+        Использует ML-модель (risk_classifier) когда доступна,
+        иначе — rule-based fallback.
         
         Returns:
             dict: {
                 'risk_level': 'normal' | 'warning' | 'critical',
-                'reasons': [str],  # причины риска
+                'reasons': [str],
                 'score': float,    # 0-100
+                'ml_probability': float | None,  # вероятность от модели
             }
         """
+        # ── Попытка ML-предсказания ──────────────────────────────────
+        ml_result = None
+        try:
+            from services.ml_prediction_service import predict_risk
+            student = User.query.get(student_id)
+            if student:
+                ml_result = predict_risk(student)
+        except Exception as e:
+            logger.debug("ML risk prediction unavailable: %s", e)
+
+        # ── Rule-based метрики (всегда нужны для reasons) ────────────
         avg = StudentAnalytics.calculate_average_score(student_id)
         trend = StudentAnalytics.calculate_trend(student_id)
         
@@ -104,6 +121,7 @@ class StudentAnalytics:
             'risk_level': 'normal',
             'reasons': [],
             'score': 0.0,
+            'ml_probability': None,
         }
         
         # Низкий средний балл
@@ -129,10 +147,24 @@ class StudentAnalytics:
             result['reasons'].append(f'Много пропусков: {attendance["absent_percentage"]}%')
         
         # Определяем уровень риска
-        if result['score'] >= 70:
-            result['risk_level'] = 'critical'
-        elif result['score'] >= 40:
-            result['risk_level'] = 'warning'
+        # Если ML-модель доступна — используем её вероятность как основу
+        if ml_result is not None:
+            prob = ml_result['risk_probability']
+            result['ml_probability'] = prob
+            # ML score: вероятность × 100
+            result['score'] = round(prob * 100, 2)
+            if prob >= 0.7:
+                result['risk_level'] = 'critical'
+            elif prob >= 0.4:
+                result['risk_level'] = 'warning'
+            else:
+                result['risk_level'] = 'normal'
+        else:
+            # Fallback: rule-based
+            if result['score'] >= 70:
+                result['risk_level'] = 'critical'
+            elif result['score'] >= 40:
+                result['risk_level'] = 'warning'
         
         result['score'] = round(result['score'], 2)
         return result

@@ -27,6 +27,7 @@ venv/
 env/
 
 *.log
+*.pkl
 
 .claude
 
