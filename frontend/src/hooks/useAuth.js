@@ -7,10 +7,12 @@ import { useAuthStore } from '../store/useAuthStore';
 export const useAuth = () => {
   const user            = useAuthStore((s) => s.user);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const role            = useAuthStore((s) => s.role);
   const loading         = useAuthStore((s) => s.loading);
+  const logout           = useAuthStore((s) => s.logout);
 
-  return { user, isAuthenticated, role, loading };
+  const role = user?.user_type || user?.role || null;
+
+  return { user, isAuthenticated, role, loading, logout };
 };
 
 export default useAuth;

@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts';
-import { useAuth } from '../../hooks/useAuth';
 import { useStudentGrades } from '../../hooks/useStudentGrades';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
@@ -25,16 +24,17 @@ const avgColor = (avg) => {
   return 'bg-red-500 text-white';
 };
 
+const val = (g) => g.score ?? g.grade ?? 0;
+
 const calcAvg = (list) => {
   if (!list.length) return 0;
-  const total = list.reduce((s, g) => s + g.grade * (g.weight || 1), 0);
+  const total = list.reduce((s, g) => s + val(g) * (g.weight || 1), 0);
   const w = list.reduce((s, g) => s + (g.weight || 1), 0);
   return w ? total / w : 0;
 };
 
 export default function GradesPage() {
-  const { user } = useAuth();
-  const { grades, quarterGrades, loading } = useStudentGrades(user?.id);
+  const { grades, quarterGrades, loading } = useStudentGrades();
 
   const [subjectFilter, setSubjectFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -162,7 +162,7 @@ export default function GradesPage() {
                       <p className="text-sm font-medium text-gray-800">{qg.subject}</p>
                       <p className="text-xs text-gray-400">{qg.quarter ? `${qg.quarter} четверть` : ''}</p>
                     </div>
-                    <span className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${gradeBg(qg.grade)}`}>{qg.grade}</span>
+                    <span className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${gradeBg(val(qg))}`}>{val(qg)}</span>
                   </li>
                 ))}
               </ul>
@@ -199,7 +199,7 @@ export default function GradesPage() {
                       <td className="px-4 py-3 font-medium text-gray-800">{g.subject}</td>
                       <td className="px-4 py-3 text-gray-500">{TYPE_LABELS[g.type] || g.type}</td>
                       <td className="px-4 py-3 text-center">
-                        <span className={`inline-flex w-8 h-8 items-center justify-center rounded-lg font-bold ${gradeBg(g.grade)}`}>{g.grade}</span>
+                        <span className={`inline-flex w-8 h-8 items-center justify-center rounded-lg font-bold ${gradeBg(val(g))}`}>{val(g)}</span>
                       </td>
                       <td className="px-4 py-3 text-center text-gray-500">{g.weight}</td>
                       <td className="px-4 py-3 text-gray-500">{g.teacher_name || `Учитель ${g.teacher_id}`}</td>

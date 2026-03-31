@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 
-export const useUIStore = create((set) => ({
+let notifId = 0;
+
+export const useUIStore = create((set, get) => ({
   // UI состояние
   sidebarOpen: true,
   theme: localStorage.getItem('theme') || 'light',
@@ -27,27 +29,22 @@ export const useUIStore = create((set) => ({
 
   // Управление уведомлениями
   addNotification: (notification) => {
-    const id = Date.now();
-    const withId = { ...notification, id };
+    const id = ++notifId;
+    const entry = { id, ...notification };
     set((state) => ({
-      notifications: [...state.notifications, withId],
+      notifications: [...state.notifications, entry],
     }));
-
-    // Автоудаление через 3 секунды
-    if (notification.autoClose !== false) {
-      setTimeout(() => {
-        set((state) => ({
-          notifications: state.notifications.filter(n => n.id !== id),
-        }));
-      }, notification.duration || 3000);
-    }
-
-    return id;
+    // Автоудаление через 4 секунды
+    setTimeout(() => {
+      set((state) => ({
+        notifications: state.notifications.filter((n) => n.id !== id),
+      }));
+    }, 4000);
   },
 
   removeNotification: (id) => {
     set((state) => ({
-      notifications: state.notifications.filter(n => n.id !== id),
+      notifications: state.notifications.filter((n) => n.id !== id),
     }));
   },
 

@@ -378,12 +378,14 @@ def seed_database():
             role="parent",
             is_active=True,
             is_verified=True,
+            parent_id=None,  # parent_id is on the STUDENT (child points to parent)
         )
         demo_parent.set_password("password")
         db.session.add(demo_parent)
         db.session.flush()
 
-        # Note: Parent-child linking is not implemented in User model
+        # Link Ayman → Zhanna
+        demo_student.parent_id = demo_parent.id
 
         # Add some grades for demo student
         for _ in range(15):
@@ -438,6 +440,12 @@ def seed_database():
   Admin:   admin@school.com / admin123
   Teacher: teacher1@school.com / teacher123
   Student: student1@school.com / student123
+
+🎭 Demo Accounts (LoginPage):
+  Admin:   admin@school.kz / password
+  Teacher: daria@school.kz / password
+  Student: ayman@school.kz / password
+  Parent:  zhanna.smagulova@example.kz / password
         """)
 
 

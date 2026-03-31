@@ -4,119 +4,163 @@ import { useAuth } from './hooks/useAuth';
 import { useWebSocket } from './hooks/useWebSocket';
 import { useAuthStore } from './store/useAuthStore';
 import Layout from './components/Layout';
-import NotificationContainer from './components/NotificationContainer';
-import './styles/globals.css';
-
-// Pages
 import LoginPage from './pages/LoginPage';
 import StudentDashboard from './pages/StudentDashboard';
 import TeacherDashboard from './pages/TeacherDashboard';
+import AdminDashboard from './pages/AdminDashboard';
+import UsersManagement from './pages/admin/UsersManagement';
+import SubjectsManagement from './pages/admin/SubjectsManagement';
+import ClassesManagement from './pages/admin/ClassesManagement';
+import ScheduleManagement from './pages/admin/ScheduleManagement';
+import GradesManagement from './pages/admin/GradesManagement';
+import AchievementsManagement from './pages/admin/AchievementsManagement';
+import AttendanceManagement from './pages/admin/AttendanceManagement';
 import ParentDashboard from './pages/parent/ParentDashboard';
-import AdminDashboard from './pages/admin/AdminDashboard';
+import NotificationContainer from './components/NotificationContainer';
+import './styles/globals.css';
 
-import GradesPage from './pages/student/GradesPage';
-import SchedulePage from './pages/student/SchedulePage';
-import AchievementsPage from './pages/student/AchievementsPage';
+function getDashboardPath(user) {
+  if (!user) return '/login';
+  const role = user.user_type || user.role;
+  if (role === 'admin') return '/admin';
+  if (role === 'teacher') return '/teacher';
+  if (role === 'parent') return '/parent';
+  if (role === 'student') return '/student';
+  return '/login';
+}
 
-import ClassesPage from './pages/teacher/ClassesPage';
-import AnalyticsPage from './pages/teacher/AnalyticsPage';
+function ProtectedRoute({ children, allowedRoles }) {
+  const user = useAuthStore((s) => s.user);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const logout = useAuthStore((s) => s.logout);
+  const [shouldLogout, setShouldLogout] = useState(false);
 
-import ChildGradesPage from './pages/parent/ChildGradesPage';
-import AttendancePage from './pages/parent/AttendancePage';
+  const role = user?.user_type || user?.role;
+  const invalidRole = user && (!role || !['admin', 'teacher', 'student', 'parent'].includes(role));
 
-import UsersPage from './pages/admin/UsersPage';
-import ReportsPage from './pages/admin/ReportsPage';
+  useEffect(() => {
+    if (invalidRole) {
+      logout();
+      setShouldLogout(true);
+    }
+  }, [invalidRole, logout]);
 
-const Placeholder = ({ title }) => (
-  <div className="flex items-center justify-center h-64">
-    <div className="text-center">
-      <p className="text-2xl mb-2">🚧</p>
-      <p className="text-gray-500">{title} — скоро</p>
-    </div>
-  </div>
-);
-
-/** Редирект на /dashboard если роль не совпадает */
-function RoleGuard({ allow, children }) {
-  const { role } = useAuth();
-  if (!allow.includes(role)) {
-    return <Navigate to="/dashboard" replace />;
+  if (!isAuthenticated || !user || shouldLogout) {
+    return <Navigate to="/login" replace />;
   }
   return children;
 }
 
-/** Основные маршруты — только для аутентифицированных */
-function AuthenticatedApp() {
-  useWebSocket();
-  const { role } = useAuth();
+function LoginRoute() {
+  const user = useAuthStore((s) => s.user);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
-  const dashboard =
-    role === 'student' ? <StudentDashboard /> :
-    role === 'teacher' ? <TeacherDashboard /> :
-    role === 'parent'  ? <ParentDashboard />  :
-    role === 'admin'   ? <AdminDashboard />   :
-    <StudentDashboard />;
-
-  return (
-    <Layout>
-      <Routes>
-        <Route path="/dashboard" element={dashboard} />
-
-        {/* Student routes */}
-        <Route path="/grades"       element={<RoleGuard allow={['student']}><GradesPage /></RoleGuard>} />
-        <Route path="/schedule"     element={<RoleGuard allow={['student']}><SchedulePage /></RoleGuard>} />
-        <Route path="/achievements" element={<RoleGuard allow={['student']}><AchievementsPage /></RoleGuard>} />
-        <Route path="/ai-tutor"     element={<RoleGuard allow={['student']}><Placeholder title="AI Тьютор" /></RoleGuard>} />
-
-        {/* Teacher routes */}
-        <Route path="/classes"   element={<RoleGuard allow={['teacher']}><ClassesPage /></RoleGuard>} />
-        <Route path="/analytics" element={<RoleGuard allow={['teacher']}><AnalyticsPage /></RoleGuard>} />
-
-        {/* Parent routes */}
-        <Route path="/parent/grades"      element={<RoleGuard allow={['parent']}><ChildGradesPage /></RoleGuard>} />
-        <Route path="/parent/attendance"  element={<RoleGuard allow={['parent']}><AttendancePage /></RoleGuard>} />
-
-        {/* Admin routes */}
-        <Route path="/admin/users"   element={<RoleGuard allow={['admin']}><UsersPage /></RoleGuard>} />
-        <Route path="/admin/reports" element={<RoleGuard allow={['admin']}><ReportsPage /></RoleGuard>} />
-
-        <Route path="/"  element={<Navigate to="/dashboard" replace />} />
-        <Route path="*"  element={<Navigate to="/dashboard" replace />} />
-      </Routes>
-    </Layout>
-  );
+  if (isAuthenticated && user) {
+    return <Navigate to={getDashboardPath(user)} replace />;
+  }
+  return <LoginPage />;
 }
 
-function AppRoutes() {
-  const { isAuthenticated } = useAuth();
-  const [ready, setReady]   = useState(false);
-  const restoreSession      = useAuthStore((s) => s.restoreSession);
+function RootRedirect() {
+  const user = useAuthStore((s) => s.user);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
-  // Restore session ONCE on app startup
-  useEffect(() => {
-    restoreSession();
-    setReady(true);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  if (!ready) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gray-50">
-        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+  if (isAuthenticated && user) {
+    return <Navigate to={getDashboardPath(user)} replace />;
   }
-
-  return isAuthenticated ? <AuthenticatedApp /> : <LoginPage />;
+  return <Navigate to="/login" replace />;
 }
 
 function App() {
   return (
-    <>
+    <Router>
       <NotificationContainer />
-      <Router>
-        <AppRoutes />
+      <Routes>
+          <Route path="/login" element={<LoginRoute />} />
+          <Route path="/" element={<RootRedirect />} />
+
+          {/* Student routes */}
+          <Route path="/student" element={
+            <ProtectedRoute allowedRoles={['student']}>
+              <Layout><StudentDashboard /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/student/*" element={
+            <ProtectedRoute allowedRoles={['student']}>
+              <Layout><StudentDashboard /></Layout>
+            </ProtectedRoute>
+          } />
+
+          {/* Teacher routes */}
+          <Route path="/teacher" element={
+            <ProtectedRoute allowedRoles={['teacher']}>
+              <Layout><TeacherDashboard /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/teacher/*" element={
+            <ProtectedRoute allowedRoles={['teacher']}>
+              <Layout><TeacherDashboard /></Layout>
+            </ProtectedRoute>
+          } />
+
+          {/* Parent routes */}
+          <Route path="/parent" element={
+            <ProtectedRoute allowedRoles={['parent']}>
+              <Layout><ParentDashboard /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/parent/*" element={
+            <ProtectedRoute allowedRoles={['parent']}>
+              <Layout><ParentDashboard /></Layout>
+            </ProtectedRoute>
+          } />
+
+          {/* Admin routes */}
+          <Route path="/admin" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <Layout><AdminDashboard /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/users" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <Layout><UsersManagement /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/subjects" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <Layout><SubjectsManagement /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/classes" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <Layout><ClassesManagement /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/schedule" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <Layout><ScheduleManagement /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/grades" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <Layout><GradesManagement /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/achievements" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <Layout><AchievementsManagement /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/attendance" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <Layout><AttendanceManagement /></Layout>
+            </ProtectedRoute>
+          } />
+
+          {/* Catch all */}
+          <Route path="*" element={<RootRedirect />} />
+        </Routes>
       </Router>
-    </>
   );
 }
 

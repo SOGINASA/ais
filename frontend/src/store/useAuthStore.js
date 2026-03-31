@@ -1,128 +1,102 @@
 import { create } from 'zustand';
+import bilimClassClient from '../api/bilimclass/client';
 
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5000';
+// Restore initial state from localStorage
+let storedUser = null;
+const storedToken = localStorage.getItem('access_token');
+try {
+  const raw = localStorage.getItem('user');
+  if (raw) {
+    storedUser = JSON.parse(raw);
+    // Validate user has a roleф
+    const role = storedUser?.user_type || storedUser?.role;
+    if (!role || !['admin', 'teacher', 'student', 'parent'].includes(role)) {
+      storedUser = null;
+      localStorage.removeItem('user');
+      localStorage.removeItem('access_token');
+    }
+  }
+} catch {
+  storedUser = null;
+  localStorage.removeItem('user');
+  localStorage.removeItem('access_token');
+}
 
-export const useAuthStore = create((set) => ({
-  user: null,
-  isAuthenticated: false,
-  role: null, // 'student', 'teacher', 'parent', 'admin'
-  accessToken: null,
+export const useAuthStore = create((set, get) => ({
+  user: storedUser || null,
+  isAuthenticated: !!(storedToken && storedUser),
   loading: false,
   error: null,
 
-  // Real login
-  login: async (identifier, password) => {
+  login: async (email, password) => {
     set({ loading: true, error: null });
     try {
-      const response = await fetch(`${API_BASE}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
+      const res = await bilimClassClient.post('/auth/login', { identifier: email, password });
+      console.log('Login response:', res);
+      const token = res.access_token || res.token;
+      const user = res.user;
+      if (!token || !user) {
+        throw new Error('Invalid response from server');
       }
-
-      const { user, access_token, refresh_token } = data;
-
-      localStorage.setItem('access_token', access_token);
-      localStorage.setItem('refresh_token', refresh_token);
+      localStorage.setItem('access_token', token);
       localStorage.setItem('user', JSON.stringify(user));
-
-      set({
-        user,
-        isAuthenticated: true,
-        role: user.role || user.user_type,
-        accessToken: access_token,
-        loading: false,
-      });
-
+      set({ user, isAuthenticated: true, loading: false, error: null });
       return user;
-    } catch (error) {
-      set({ error: error.message, loading: false });
-      throw error;
+    } catch (err) {
+      const msg = err.response?.data?.error || err.message;
+      set({ error: msg, loading: false });
+      throw err;
     }
   },
 
-  // Real register
-  register: async (identifier, password, full_name) => {
+  register: async (data) => {
     set({ loading: true, error: null });
     try {
-      const response = await fetch(`${API_BASE}/api/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier, password, full_name }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Registration failed');
+      const res = await bilimClassClient.post('/auth/register', data);
+      const { access_token, user } = res;
+      if (access_token) {
+        localStorage.setItem('access_token', access_token);
+        localStorage.setItem('user', JSON.stringify(user));
+        set({ user, isAuthenticated: true, loading: false });
+      } else {
+        set({ loading: false });
       }
-
-      const { user, access_token, refresh_token } = data;
-
-      localStorage.setItem('access_token', access_token);
-      localStorage.setItem('refresh_token', refresh_token);
-      localStorage.setItem('user', JSON.stringify(user));
-
-      set({
-        user,
-        isAuthenticated: true,
-        role: user.role || user.user_type,
-        accessToken: access_token,
-        loading: false,
-      });
-
-      return user;
-    } catch (error) {
-      set({ error: error.message, loading: false });
-      throw error;
+      return res;
+    } catch (err) {
+      const msg = err.response?.data?.error || err.message;
+      set({ error: msg, loading: false });
+      throw err;
     }
   },
 
-  // Logout
   logout: () => {
     localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
-    set({
-      user: null,
-      isAuthenticated: false,
-      role: null,
-      accessToken: null,
-      error: null,
-    });
+    set({ user: null, isAuthenticated: false, error: null });
   },
 
-  // Восстановить сессию из localStorage
   restoreSession: () => {
     const token = localStorage.getItem('access_token');
-    const userStr = localStorage.getItem('user');
-
-    if (token && userStr) {
+    const userData = localStorage.getItem('user');
+    if (token && userData) {
       try {
-        const user = JSON.parse(userStr);
-        set({
-          user,
-          isAuthenticated: true,
-          role: user.role || user.user_type,
-          accessToken: token,
-        });
-        return true;
-      } catch (error) {
-        console.error('Failed to restore session:', error);
-        return false;
+        const user = JSON.parse(userData);
+        const role = user?.user_type || user?.role;
+        if (role && ['admin', 'teacher', 'student', 'parent'].includes(role)) {
+          set({ user, isAuthenticated: true });
+          return;
+        }
+      } catch {
+        // fall through
       }
     }
-    return false;
+    // Invalid or missing — clear
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('user');
+    set({ user: null, isAuthenticated: false });
   },
 
-  // Установить роль
-  setRole: (role) => set({ role }),
+  clearError: () => set({ error: null }),
 }));
 
 export default useAuthStore;
