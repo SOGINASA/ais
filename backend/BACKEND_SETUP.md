@@ -50,7 +50,7 @@ python seed.py
 python app.py
 ```
 
-Сервер: `http://localhost:5000`
+Сервер: `http://localhost:5252`
 
 ---
 
@@ -291,7 +291,7 @@ full = StudentAnalytics.get_full_analytics(student_id)
 
 ```javascript
 const token = localStorage.getItem('access_token');
-const ws = new WebSocket(`ws://localhost:5000/ws/notifications?token=${token}`);
+const ws = new WebSocket(`ws://localhost:5252/ws/notifications?token=${token}`);
 
 ws.onmessage = (event) => {
   const data = JSON.parse(event.data);
@@ -359,7 +359,7 @@ db.session.commit()
 docker build -t aqbobek-backend .
 
 # Run
-docker run -p 5000:5000 \
+docker run -p 5252:5252 \
   -e FLASK_ENV=production \
   -e DATABASE_URL=postgresql://... \
   -e GROQ_API_KEY=... \
@@ -372,7 +372,7 @@ docker run -p 5000:5000 \
 
 ```bash
 # Login
-curl -X POST http://localhost:5000/api/auth/login \
+curl -X POST http://localhost:5252/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "identifier": "student1@school.com",
@@ -384,19 +384,19 @@ TOKEN=$(jq -r '.access_token' response.json)
 
 # Get grades
 curl -H "Authorization: Bearer $TOKEN" \
-  http://localhost:5000/api/student/grades
+  http://localhost:5252/api/student/grades
 
 # Get leaderboard
 curl -H "Authorization: Bearer $TOKEN" \
-  http://localhost:5000/api/student/leaderboard
+  http://localhost:5252/api/student/leaderboard
 
 # Get schedule
 curl -H "Authorization: Bearer $TOKEN" \
-  http://localhost:5000/api/student/schedule
+  http://localhost:5252/api/student/schedule
 
 # Get analytics
 curl -H "Authorization: Bearer $TOKEN" \
-  http://localhost:5000/api/student/analytics
+  http://localhost:5252/api/student/analytics
 ```
 
 ---

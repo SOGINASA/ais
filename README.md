@@ -28,7 +28,7 @@
 
 ## Быстрый старт
 
-Требования: Docker и Docker Compose 2.0+, свободные порты 3000 и 5000.
+Требования: Docker и Docker Compose 2.0+, свободные порты 3000 и 5252.
 
 ```bash
 git clone <repo-url>
@@ -40,7 +40,7 @@ docker-compose up --build
 
 После запуска:
 - Frontend: `http://localhost:3000`
-- Backend: `http://localhost:5000`
+- Backend: `http://localhost:5252`
 
 Заполнение демо-данными:
 
@@ -70,7 +70,7 @@ docker-compose exec backend python seed.py
              +---------------------+---------------------+
              |                     |                     |
    +---------v---------+ +--------v--------+ +----------v----------+
-   |  Frontend :3000   | |  Backend :5000  | |   WebSocket /ws    |
+   |  Frontend :3000   | |  Backend :5252  | |   WebSocket /ws    |
    |  React + Tailwind | |  Flask REST API | |   Notifications    |
    +-------------------+ +--------+--------+ +---------------------+
                                   |
@@ -254,7 +254,7 @@ python seed.py
 python app.py
 ```
 
-Сервер: `http://localhost:5000`
+Сервер: `http://localhost:5252`
 
 ### Frontend
 
@@ -373,7 +373,7 @@ make lint                  # flake8
 
 После запуска убедитесь:
 
-- Backend отвечает: `http://localhost:5000/api/auth/health`
+- Backend отвечает: `http://localhost:5252/api/auth/health`
 - Frontend доступен: `http://localhost:3000`
 - Оба контейнера healthy: `make ps`
 - Нет CORS-ошибок в консоли браузера

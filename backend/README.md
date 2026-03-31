@@ -181,7 +181,7 @@ flask db migrate -m "init"
 flask db upgrade
 
 python app.py
-# API: http://localhost:5000/api
+# API: http://localhost:5252/api
 ```
 
 ### Docker
@@ -192,7 +192,7 @@ cp .env.example .env
 # Заполните .env
 
 docker-compose up --build
-# API: http://localhost:5000/api
+# API: http://localhost:5252/api
 ```
 
 ---

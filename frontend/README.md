@@ -242,7 +242,7 @@ const {
 Создайте `.env` файл в корне `frontend/`:
 
 ```
-REACT_APP_API_BASE=http://localhost:5000
+REACT_APP_API_BASE=http://localhost:5252
 REACT_APP_ENV=development
 REACT_APP_MOCK_API_ENABLED=true
 ```

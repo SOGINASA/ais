@@ -28,7 +28,7 @@ flask db upgrade
 python -m app
 
 # Или с gunicorn
-gunicorn -w 4 -b 0.0.0.0:5000 "app:create_app()"
+gunicorn -w 4 -b 0.0.0.0:5252 "app:create_app()"
 ```
 
 ## Требуемые переменные окружения
@@ -95,7 +95,7 @@ Response:
 
 ```bash
 curl -H "Authorization: Bearer TOKEN" \
-  "http://localhost:5000/api/student/grades?subject_id=1&weeks=4"
+  "http://localhost:5252/api/student/grades?subject_id=1&weeks=4"
 
 Response:
 {
@@ -127,7 +127,7 @@ Response:
 
 ```bash
 curl -H "Authorization: Bearer TOKEN" \
-  "http://localhost:5000/api/student/leaderboard"
+  "http://localhost:5252/api/student/leaderboard"
 
 Response:
 {
@@ -160,7 +160,7 @@ Response:
 
 ```bash
 curl -H "Authorization: Bearer TOKEN" \
-  "http://localhost:5000/api/student/portfolio"
+  "http://localhost:5252/api/student/portfolio"
 
 Response:
 {
@@ -194,7 +194,7 @@ Response:
 
 ```bash
 curl -H "Authorization: Bearer TOKEN" \
-  "http://localhost:5000/api/student/schedule"
+  "http://localhost:5252/api/student/schedule"
 
 Response:
 {
@@ -230,7 +230,7 @@ Response:
 
 ```bash
 curl -H "Authorization: Bearer TOKEN" \
-  "http://localhost:5000/api/student/attendance?days=30"
+  "http://localhost:5252/api/student/attendance?days=30"
 
 Response:
 {
@@ -260,7 +260,7 @@ Response:
 
 ```bash
 curl -H "Authorization: Bearer TOKEN" \
-  "http://localhost:5000/api/student/analytics"
+  "http://localhost:5252/api/student/analytics"
 
 Response:
 {
@@ -298,7 +298,7 @@ Response:
 
 ```bash
 curl -H "Authorization: Bearer TOKEN" \
-  "http://localhost:5000/api/teacher/classes"
+  "http://localhost:5252/api/teacher/classes"
 ```
 
 #### GET `/api/teacher/class/{class_id}/students`
@@ -306,7 +306,7 @@ curl -H "Authorization: Bearer TOKEN" \
 
 ```bash
 curl -H "Authorization: Bearer TOKEN" \
-  "http://localhost:5000/api/teacher/class/1/students"
+  "http://localhost:5252/api/teacher/class/1/students"
 
 Response:
 {
@@ -335,7 +335,7 @@ Response:
 
 ```bash
 curl -H "Authorization: Bearer TOKEN" \
-  "http://localhost:5000/api/teacher/risk-students"
+  "http://localhost:5252/api/teacher/risk-students"
 
 Response:
 {
@@ -375,7 +375,7 @@ curl -X POST -H "Authorization: Bearer TOKEN" \
     "quarter": 1,
     "description": "Good performance"
   }' \
-  "http://localhost:5000/api/teacher/grade"
+  "http://localhost:5252/api/teacher/grade"
 ```
 
 #### POST `/api/teacher/mark-attendance`
@@ -397,7 +397,7 @@ curl -X POST -H "Authorization: Bearer TOKEN" \
       }
     ]
   }' \
-  "http://localhost:5000/api/teacher/mark-attendance"
+  "http://localhost:5252/api/teacher/mark-attendance"
 ```
 
 #### POST `/api/teacher/report/{student_id}`
@@ -405,7 +405,7 @@ AI отчет по студенту
 
 ```bash
 curl -X POST -H "Authorization: Bearer TOKEN" \
-  "http://localhost:5000/api/teacher/report/5"
+  "http://localhost:5252/api/teacher/report/5"
 
 Response:
 {
@@ -442,7 +442,7 @@ Response:
 
 ```bash
 curl -H "Authorization: Bearer TOKEN" \
-  "http://localhost:5000/api/ai/student-report/5"
+  "http://localhost:5252/api/ai/student-report/5"
 
 Response:
 {
@@ -462,7 +462,7 @@ Response:
 
 ```bash
 curl -H "Authorization: Bearer TOKEN" \
-  "http://localhost:5000/api/ai/class-report/1"
+  "http://localhost:5252/api/ai/class-report/1"
 
 Response:
 {
@@ -491,7 +491,7 @@ Response:
 
 ```bash
 curl -H "Authorization: Bearer TOKEN" \
-  "http://localhost:5000/api/ai/predictions/5"
+  "http://localhost:5252/api/ai/predictions/5"
 
 Response:
 {
@@ -518,7 +518,7 @@ Response:
 
 ```bash
 curl -H "Authorization: Bearer TOKEN" \
-  "http://localhost:5000/api/schedule/class/1"
+  "http://localhost:5252/api/schedule/class/1"
 ```
 
 #### GET `/api/schedule/teacher/{teacher_id}`
@@ -526,7 +526,7 @@ curl -H "Authorization: Bearer TOKEN" \
 
 ```bash
 curl -H "Authorization: Bearer TOKEN" \
-  "http://localhost:5000/api/schedule/teacher/101"
+  "http://localhost:5252/api/schedule/teacher/101"
 ```
 
 #### POST `/api/schedule/generate`
@@ -536,7 +536,7 @@ curl -H "Authorization: Bearer TOKEN" \
 curl -X POST -H "Authorization: Bearer TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"clear_existing": false}' \
-  "http://localhost:5000/api/schedule/generate"
+  "http://localhost:5252/api/schedule/generate"
 
 Response:
 {
@@ -554,7 +554,7 @@ Response:
 
 ```bash
 curl -X POST -H "Authorization: Bearer TOKEN" \
-  "http://localhost:5000/api/schedule/recalculate"
+  "http://localhost:5252/api/schedule/recalculate"
 
 Response:
 {
@@ -699,7 +699,7 @@ with app.app_context():
 
 ```javascript
 const token = localStorage.getItem('access_token');
-const ws = new WebSocket(`ws://localhost:5000/ws/notifications?token=${token}`);
+const ws = new WebSocket(`ws://localhost:5252/ws/notifications?token=${token}`);
 
 ws.onmessage = (event) => {
   const data = JSON.parse(event.data);
@@ -756,12 +756,12 @@ Common error codes:
 
 ```bash
 # Экспортируем Postman коллекцию
-# API docs: http://localhost:5000/docs
+# API docs: http://localhost:5252/docs
 
 # Или используем curl
 curl -X GET \
   -H "Authorization: Bearer YOUR_TOKEN" \
-  http://localhost:5000/api/student/grades
+  http://localhost:5252/api/student/grades
 ```
 
 ---
@@ -785,7 +785,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 COPY . .
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "app:create_app()"]
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5252", "app:create_app()"]
 ```
 
 ### Environment Variables
